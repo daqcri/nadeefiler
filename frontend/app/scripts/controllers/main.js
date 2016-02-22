@@ -9,7 +9,7 @@
  */
 angular.module('frontendApp')
   .controller('MainCtrl', function ($scope) {
-    $scope.todos = ['Item 1', 'Item 2', 'Item 3'];
+    $scope.todos = ['TODO 1', 'TODO 2', 'TODO 3'];
 
     $scope.addTodo = function () {
       $scope.todos.push($scope.todo);
