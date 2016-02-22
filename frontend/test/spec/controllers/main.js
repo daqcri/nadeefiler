@@ -17,7 +17,13 @@ describe('Controller: MainCtrl', function () {
     });
   }));
 
-  it('should attach a list of awesomeThings to the scope', function () {
-    expect(MainCtrl.awesomeThings.length).toBe(3);
+  it('should attach a list of todos to the scope', function () {
+    expect(scope.todos.length).toBe(3);
   });
+
+  it('should attach add/remove todo handlers the scope', function () {
+    expect(typeof scope.addTodo).toBe('function');
+    expect(typeof scope.removeTodo).toBe('function');
+  });
+
 });
