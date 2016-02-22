@@ -26,9 +26,8 @@
   "scripts": {
     "debug": "node debug app.js",
     "start": "node app.js",
-    "prepare": "cd frontend && grunt"
+    "postinstall": "cd frontend && grunt"
     // TODO: create dedicated task where tests are excluded in it
-    // to deploy, need to invoke 'npm run-script prepare' in the build phase
   },
   "main": "app.js",
   "repository": {
