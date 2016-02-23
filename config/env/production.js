@@ -38,5 +38,9 @@ module.exports = {
 
   blueprints: {
     shortcuts: false
+  },
+
+  cors: {
+    allRoutes: false
   }
 };
