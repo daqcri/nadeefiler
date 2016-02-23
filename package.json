@@ -27,7 +27,7 @@
   "scripts": {
     "debug": "node debug app.js",
     "start": "sails lift",
-    "postinstall": "cd frontend && grunt"
+    "postinstall": "cd frontend && npm install && grunt"
   },
   "main": "app.js",
   "repository": {
