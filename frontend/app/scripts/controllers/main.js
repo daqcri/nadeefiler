@@ -8,16 +8,38 @@
  * Controller of the frontendApp
  */
 angular.module('frontendApp')
-  .controller('MainCtrl', function ($scope) {
-    $scope.todos = ['TODO 1', 'TODO 2', 'TODO 3'];
+  .controller('MainCtrl', function($scope, $resource, ENV) {
+    // prepare RESTful resources
+    // TODO: move into a factory
 
-    $scope.addTodo = function () {
-      $scope.todos.push($scope.todo);
-      $scope.todo = '';
+    var Project = $resource(
+      ENV.API_BASE_URL + '/projects/:projectId',
+      {
+        projectId: '@id'
+      },
+      {
+        update: {
+          method: 'PUT'
+        }
+      }
+    );
+
+    Project.query(function(projects){
+      $scope.projects = projects;
+    });
+
+    $scope.addProject = function () {
+      var project = new Project({name: $scope.newProjectName});
+      project.$save(function(project){
+        $scope.projects.push(project);
+      });
+      $scope.newProjectName = '';
     };
 
-    $scope.removeTodo = function (index) {
-      $scope.todos.splice(index, 1);
+    $scope.removeProject = function(project, index) {
+      project.$remove(function(){
+        $scope.projects.splice(index, 1);
+      });
     };
 
   });
