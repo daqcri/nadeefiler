@@ -1,7 +1,7 @@
 {
   "name": "data-profiling-dashboard",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "a Sails application",
   "keywords": [],
   "dependencies": {
@@ -32,8 +32,13 @@
   "main": "app.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/hammady/data-profiling-dashboard.git"
+    "url": "git://github.com/daqcri/data-profiling-dashboard.git"
   },
-  "author": "hammady",
-  "license": ""
+  "author": "Hossam Hammady (@hammady)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/daqcri/data-profiling-dashboard/issues"
+  },
+  "homepage": "https://github.com/daqcri/data-profiling-dashboard#readme",
+  "devDependencies": {}
 }
