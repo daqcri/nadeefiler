@@ -25,6 +25,9 @@ module.exports = function (grunt) {
     dist: 'dist'
   };
 
+  // ng-constant
+  grunt.loadNpmTasks('grunt-ng-constant');
+
   // Define the configuration for all the tasks
   grunt.initConfig({
 
@@ -423,7 +426,33 @@ module.exports = function (grunt) {
         configFile: 'test/karma.conf.js',
         singleRun: true
       }
+    },
+
+    ngconstant: {
+      options: {
+        name: 'config'
+      },
+      development: {
+        options: {
+          dest: '<%= yeoman.app %>/scripts/config.js'
+        },
+        constants: {
+          ENV: grunt.file.readJSON('config/development.json')
+        },
+        values: {
+          debug: true
+        }
+      },
+      production: {
+        options: {
+          dest: '<%= yeoman.dist %>/scripts/config.js'
+        },
+        constants: {
+          ENV: grunt.file.readJSON('config/production.json')
+        },
+      }
     }
+
   });
 
 
@@ -434,6 +463,7 @@ module.exports = function (grunt) {
 
     grunt.task.run([
       'clean:server',
+      'ngconstant:development',
       'wiredep',
       'concurrent:server',
       'postcss:server',
@@ -458,6 +488,7 @@ module.exports = function (grunt) {
 
   grunt.registerTask('build', [
     'clean:dist',
+    'ngconstant:production',
     'wiredep',
     'useminPrepare',
     'concurrent:dist',
