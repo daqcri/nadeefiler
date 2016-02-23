@@ -18,7 +18,7 @@ module.exports = {
    ***************************************************************************/
 
   models: {
-    connection: 'localPostgres',
+    connection: 'productionPostgres',
     migrate: 'safe'
   },
 
