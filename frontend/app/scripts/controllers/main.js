@@ -32,7 +32,7 @@ angular.module('frontendApp')
       var project = new Project({name: $scope.newProjectName});
       project.$save(function(project){
         $scope.projects.push(project);
-        $scope.selectProject(project)
+        $scope.selectProject(project);
       });
       $scope.newProjectName = '';
     };
@@ -40,15 +40,16 @@ angular.module('frontendApp')
     $scope.removeProject = function($event, project, index) {
       project.$remove(function(){
         $scope.projects.splice(index, 1);
-        if (project == $scope.selectedProject)
+        if (project === $scope.selectedProject) {
           $scope.selectProject({name: null});
+        }
       });
       $scope.preventDefault($event);
     };
 
     $scope.selectProject = function(project) {
       $scope.selectedProject = project;
-    }
+    };
 
     $scope.widgets = [
       { sizeX: 2, sizeY: 1, row: 0, col: 0 },
@@ -88,23 +89,17 @@ angular.module('frontendApp')
         maxSizeY: null, // maximum row height of an item
         resizable: {
            enabled: true,
-           handles: ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw'],
-           start: function(event, $element, widget) {}, // optional callback fired when resize is started,
-           resize: function(event, $element, widget) {}, // optional callback fired when item is resized,
-           stop: function(event, $element, widget) {} // optional callback fired when item is finished resizing
+           handles: ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw']
         },
         draggable: {
            enabled: true, // whether dragging items is supported
-           handle: '.my-class', // optional selector for resize handle
-           start: function(event, $element, widget) {}, // optional callback fired when drag is started,
-           drag: function(event, $element, widget) {}, // optional callback fired when item is moved,
-           stop: function(event, $element, widget) {} // optional callback fired when item is finished dragging
+           handle: '.my-class' // optional selector for resize handle
         }
     };
 
     $scope.removeWidget = function(widget, index) {
       $scope.widgets.splice(index, 1);
-    }
+    };
 
     $scope.preventDefault = function($event) {
       $event.preventDefault();
