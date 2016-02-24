@@ -27,7 +27,7 @@
   "scripts": {
     "debug": "node debug app.js",
     "start": "sails lift",
-    "postinstall": "cd frontend && npm install && node_modules/bower/bin/bower install && grunt"
+    "postinstall": "cd frontend && npm install && node_modules/bower/bin/bower install && grunt deploy"
   },
   "main": "app.js",
   "repository": {
