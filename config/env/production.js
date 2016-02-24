@@ -18,8 +18,7 @@ module.exports = {
    ***************************************************************************/
 
   models: {
-    connection: 'productionPostgres',
-    migrate: 'safe'
+    connection: 'productionMongo'
   },
 
   /***************************************************************************

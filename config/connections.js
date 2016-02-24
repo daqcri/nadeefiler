@@ -56,13 +56,16 @@ module.exports.connections = {
   * Run: npm install sails-mongo                                             *
   *                                                                          *
   ***************************************************************************/
-  someMongodbServer: {
+  localMongo: {
     adapter: 'sails-mongo',
     host: 'localhost',
     port: 27017,
-    // user: 'username',
-    // password: 'password',
-    // database: 'your_mongo_db_name_here'
+    database: 'nadeefiler_dev'
+  },
+
+  productionMongo: {
+    adapter: 'sails-mongo',
+    url: process.env.MONGOLAB_URI
   },
 
   /***************************************************************************

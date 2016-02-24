@@ -18,8 +18,7 @@ module.exports = {
    ***************************************************************************/
 
   models: {
-    connection: 'localPostgres',
-    migrate: 'alter'
+    connection: 'localMongo'
   },
 
 };
