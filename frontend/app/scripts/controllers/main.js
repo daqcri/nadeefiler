@@ -8,7 +8,7 @@
  * Controller of the frontendApp
  */
 angular.module('frontendApp')
-  .controller('MainCtrl', function($scope, $resource, ENV) {
+  .controller('MainCtrl', function($scope, $resource, ENV, Upload, $timeout) {
     // prepare RESTful resources
     // TODO: move into a factory
 
@@ -104,6 +104,28 @@ angular.module('frontendApp')
     $scope.preventDefault = function($event) {
       $event.preventDefault();
       $event.stopPropagation();
+    };
+
+    $scope.uploadFiles = function (files) {
+      $scope.uploadedFiles = files;
+      if (files && files.length) {
+        Upload.upload({
+          url: ENV.API_BASE_URL + '/datasets',
+          data: {files: files},
+          arrayKey: ''
+        }).then(function (response) {
+          $timeout(function () {
+            $scope.uploadResult = response.data;
+          });
+        }, function (response) {
+          if (response.status > 0) {
+            $scope.uploadErrorMsg = response.status + ': ' + response.data;
+          }
+        }, function (evt) {
+          $scope.uploadProgress = 
+            Math.min(100, parseInt(100.0 * evt.loaded / evt.total));
+        });
+      }
     };
 
   });

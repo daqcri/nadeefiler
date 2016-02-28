@@ -18,7 +18,8 @@ angular
     'ngTouch',
     'config',
     'ui.bootstrap',
-    'gridster'
+    'gridster',
+    'ngFileUpload'
   ])
   .config(function ($routeProvider) {
     $routeProvider
