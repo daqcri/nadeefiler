@@ -41,7 +41,7 @@ module.exports = {
           Dataset.create({
             id: fd,
             name: file.filename,
-            project: req.param('project_id')
+            project: req.param('projectId')
           }).exec(function(err, dataset){
             // we are not using findOrCreate because it is not necessarily atomic
             // https://github.com/balderdashy/waterline/issues/929
@@ -66,10 +66,26 @@ module.exports = {
   },
 
   find: function(req, res) {
-    var projectId = req.param('project_id');
-    if (!projectId) return res.serverError("Missing project_id");
+    var projectId = req.param('projectId');
+    if (!projectId) return res.serverError("Missing projectId");
 
     Dataset.find({project: projectId}).sort("createdAt").exec(function(err, datasets){
+
+        // persisting count when computed to make future requests faster
+        // must be delayed because of async 
+        // if (dataset.count == null) {
+        //   return Tuple.count({dataset: dataset.id})
+        //   .then(function(count){
+        //     return Dataset.update(dataset.id, {count: count})
+        //     .then(function(updatedDatasets){
+        //       return updatedDatasets[0];
+        //     })
+        //   })
+        // }
+        // else {
+        //   return dataset;
+        // }
+
       var promises = _.map(datasets, function(dataset){
         return Tuple.count({dataset: dataset.id})
         .then(function(count){

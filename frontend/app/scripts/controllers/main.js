@@ -25,7 +25,7 @@ angular.module('frontendApp')
     );
 
     var Dataset = $resource(
-      ENV.API_BASE_URL + '/datasets/:datasetId?project_id=:projectId',
+      ENV.API_BASE_URL + '/datasets/:datasetId?projectId=:projectId',
       {
         datasetId: '@id'
       }
@@ -123,7 +123,7 @@ angular.module('frontendApp')
       if (files && files.length) {
         Upload.upload({
           url: ENV.API_BASE_URL + '/datasets',
-          data: {project_id: $scope.selectedProject.id, files: files},
+          data: {projectId: $scope.selectedProject.id, files: files},
           arrayKey: ''
         }).then(function (response) {
           $timeout(function () {
