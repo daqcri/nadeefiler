@@ -12,7 +12,15 @@ module.exports = {
       type: 'text',
       unique: true,
       required: true
+    },
+    datasets: {
+      collection: 'dataset',
+      via: 'project'
     }
+  },
+
+  afterDestroy: function(destroyedRecords, cb) {
+    Dataset.destroy({project: _.pluck(destroyedRecords, 'id')}).exec(cb);
   }
 };
 

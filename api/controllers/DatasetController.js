@@ -10,59 +10,76 @@ var _ = require('lodash');
 module.exports = {
 	
   create: function(req, res) {
-    var invalidRows = {};
-    var files = _.find(req.file('files'), function(param){return _.isArray(param) && param.length > 0})
-    if (!files) {
-      return res.serverError("No files uploaded!");
-    }
-    var datasets = _.map(files, function(file){
-      return {
-        name: file.stream.filename
-      }
-    });
-    
-    Dataset.create(datasets, function(err, datasets){
-      if (err) {
-        return res.serverError(err);
-      }
+    // raise connection timeout to 10 minutes for large uploads
+    req.connection.setTimeout(10 * 60 * 1000);
 
-      // pivot datasets on name
-      datasets = _.reduce(datasets, function(hash, dataset){
-        hash[dataset.name] = dataset;
-        return hash;
-      }, {});
+    var invalidRows = {},
+        datasets = {},
+        totalRows = {};
 
-      req.file('files').upload({
-        adapter: require('skipper-csv'),
-        csvOptions: {delimiter: ',', columns: true},
-        rowHandler: function(row, fd, file){
-          row.dataset = datasets[file.filename].id;
-
-          // console.log(fd, row);
-          // TODO may buffer records and create in chunks
-          Tuple.create(row).exec(function createCB(err, tuple){
-            if (err) {
-              if (invalidRows[fd])
-                invalidRows[fd] = invalidRows[fd] + 1;
-              else
-                invalidRows[fd] = 1;
-            }
+    req.file('files').upload({
+      adapter: require('skipper-csv'),
+      csvOptions: {delimiter: ',', columns: true},
+      rowHandler: function(row, fd, file){
+        var createTuple = function(row) {
+          row.dataset = fd;
+          Tuple.create(row).exec(function(err){
+            if (err) return res.serverError(err);
           });
         }
-      }, function (err, files) {
-        if (err)
-          return res.serverError(err);
 
-        return res.json({
-          message: "Uploaded " + files.length + " CSV files!",
-          files: files,
-          invalidRows: invalidRows
-        });
+        if (totalRows[fd])
+          totalRows[fd] = totalRows[fd] + 1;
+        else
+          totalRows[fd] = 1;
 
+        if (datasets[fd]) {
+          createTuple(row);
+        }
+        else {
+          datasets[fd] = 1;
+          Dataset.create({
+            id: fd,
+            name: file.filename,
+            project: req.param('project_id')
+          }).exec(function(err, dataset){
+            // we are not using findOrCreate because it is not necessarily atomic
+            // https://github.com/balderdashy/waterline/issues/929
+            // the solution here is to keep track of datasets by fd
+            // tuples could be created even before datasets are created
+            if (err) return res.serverError(err);
+            datasets[fd] = dataset;
+            createTuple(row);
+          })
+        }
+      }
+    },
+    function (err, files) {
+      if (err) return res.serverError(err);
+
+      return res.json({
+        message: "Uploaded " + files.length + " CSV files!",
+        files: files,
+        totalRows: totalRows
       });
     });
+  },
 
+  find: function(req, res) {
+    var projectId = req.param('project_id');
+    if (!projectId) return res.serverError("Missing project_id");
+
+    Dataset.find({project: projectId}).sort("createdAt").exec(function(err, datasets){
+      var promises = _.map(datasets, function(dataset){
+        return Tuple.count({dataset: dataset.id})
+        .then(function(count){
+          return _.merge(dataset.toJSON(), {count: count})
+        })
+      });
+      return Promise.all(promises).then(function(datasets){
+        return res.json(datasets)
+      });
+    })
   }
-
 };
 

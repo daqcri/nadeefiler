@@ -24,6 +24,13 @@ angular.module('frontendApp')
       }
     );
 
+    var Dataset = $resource(
+      ENV.API_BASE_URL + '/datasets/:datasetId?project_id=:projectId',
+      {
+        datasetId: '@id'
+      }
+    );
+
     Project.query(function(projects){
       $scope.projects = projects;
     });
@@ -41,7 +48,7 @@ angular.module('frontendApp')
       project.$remove(function(){
         $scope.projects.splice(index, 1);
         if (project === $scope.selectedProject) {
-          $scope.selectProject({name: null});
+          $scope.selectProject(null);
         }
       });
       $scope.preventDefault($event);
@@ -49,6 +56,11 @@ angular.module('frontendApp')
 
     $scope.selectProject = function(project) {
       $scope.selectedProject = project;
+      if (project) {
+        Dataset.query({projectId: project.id}, function(datasets){
+          $scope.datasets = datasets;
+        });
+      }
     };
 
     $scope.widgets = [
@@ -111,11 +123,13 @@ angular.module('frontendApp')
       if (files && files.length) {
         Upload.upload({
           url: ENV.API_BASE_URL + '/datasets',
-          data: {files: files},
+          data: {project_id: $scope.selectedProject.id, files: files},
           arrayKey: ''
         }).then(function (response) {
           $timeout(function () {
             $scope.uploadResult = response.data;
+            // refresh dataset list
+            $scope.selectProject($scope.selectedProject);
           });
         }, function (response) {
           if (response.status > 0) {

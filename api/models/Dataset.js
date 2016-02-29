@@ -7,14 +7,28 @@
 
 module.exports = {
 
+  autoPK: false,
+
   attributes: {
+    id: {
+      type: 'string',
+      primaryKey: true,
+    },
     name: {
       type: 'string'
     },
     tuples: {
       collection: 'tuple',
       via: 'dataset'
+    },
+    project: {
+      model: 'project'
     }
+  },
+
+  afterDestroy: function(destroyedRecords, cb) {
+    Tuple.destroy({dataset: _.pluck(destroyedRecords, 'id')}).exec(cb);
   }
+
 };
 
