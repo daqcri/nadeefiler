@@ -8,7 +8,7 @@
  * Controller of the frontendApp
  */
 angular.module('frontendApp')
-  .controller('MainCtrl', function($scope, $resource, ENV, Upload, $timeout) {
+  .controller('MainCtrl', function($scope, $resource, ENV, Upload) {
     // prepare RESTful resources
     // TODO: move into a factory
 
@@ -81,8 +81,7 @@ angular.module('frontendApp')
       $scope.preventDefault($event);
     };
 
-    $scope.datasetGrid = {
-    }
+    $scope.datasetGrid = {};
 
     $scope.widgets = [
       { sizeX: 6, sizeY: 1, row: 0, col: 0, type: 'data', title: 'Raw data view' },
@@ -123,7 +122,7 @@ angular.module('frontendApp')
     };
 
     $scope.toggleWidget = function(widget) {
-      if (!$scope.selectedDataset) return null;
+      if (!$scope.selectedDataset) {return null;}
 
       switch(widget.type) {
         case 'data':
@@ -133,7 +132,7 @@ angular.module('frontendApp')
           return false;
           // TODO: toggle widget based on its type/status
       }
-    }
+    };
 
     $scope.removeWidget = function(widget, index) {
       $scope.widgets.splice(index, 1);
@@ -149,7 +148,7 @@ angular.module('frontendApp')
     $scope.alerts = [];
     $scope.closeAlert = function(index) {
       $scope.alerts.splice(index, 1);
-    }
+    };
 
     $scope.uploadFiles = function (files) {
       $scope.uploadedFiles = files;
