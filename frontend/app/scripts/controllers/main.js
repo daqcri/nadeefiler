@@ -31,6 +31,13 @@ angular.module('frontendApp')
       }
     );
 
+    var Tuple = $resource(
+      ENV.API_BASE_URL + '/tuples?datasetId=:datasetId',
+      {
+        datasetId: '@id'
+      }
+    );
+
     Project.query(function(projects){
       $scope.projects = projects;
     });
@@ -59,22 +66,28 @@ angular.module('frontendApp')
       if (project) {
         Dataset.query({projectId: project.id}, function(datasets){
           $scope.datasets = datasets;
+          $scope.selectDataset(null);
         });
       }
     };
 
+    $scope.selectDataset = function(dataset, $event) {
+      $scope.selectedDataset = dataset;
+      if (dataset) {
+        Tuple.query({datasetId: dataset.id}, function(tuples){
+          $scope.datasetGrid.data = tuples;
+        });
+      }
+      $scope.preventDefault($event);
+    };
+
+    $scope.datasetGrid = {
+    }
+
     $scope.widgets = [
-      { sizeX: 2, sizeY: 1, row: 0, col: 0 },
-      { sizeX: 2, sizeY: 2, row: 0, col: 2 },
-      { sizeX: 1, sizeY: 1, row: 0, col: 4 },
-      { sizeX: 1, sizeY: 1, row: 0, col: 5 },
-      { sizeX: 2, sizeY: 1, row: 1, col: 0 },
-      { sizeX: 1, sizeY: 1, row: 1, col: 4 },
-      { sizeX: 1, sizeY: 2, row: 1, col: 5 },
-      { sizeX: 1, sizeY: 1, row: 2, col: 0 },
-      { sizeX: 2, sizeY: 1, row: 2, col: 1 },
-      { sizeX: 1, sizeY: 1, row: 2, col: 3 },
-      { sizeX: 1, sizeY: 1, row: 2, col: 4 }
+      { sizeX: 6, sizeY: 1, row: 0, col: 0, type: 'data', title: 'Raw data view' },
+      { sizeX: 2, sizeY: 0, row: 1, col: 0, type: 'raw', title: 'Raw widget' },
+      { sizeX: 1, sizeY: 0, row: 1, col: 3 }
     ];
 
     $scope.gridsterOpts = {
@@ -109,14 +122,34 @@ angular.module('frontendApp')
         }
     };
 
+    $scope.toggleWidget = function(widget) {
+      if (!$scope.selectedDataset) return null;
+
+      switch(widget.type) {
+        case 'data':
+        case 'raw':
+          return true;
+        default:
+          return false;
+          // TODO: toggle widget based on its type/status
+      }
+    }
+
     $scope.removeWidget = function(widget, index) {
       $scope.widgets.splice(index, 1);
     };
 
     $scope.preventDefault = function($event) {
-      $event.preventDefault();
-      $event.stopPropagation();
+      if ($event) {
+        $event.preventDefault();
+        $event.stopPropagation();
+      }
     };
+
+    $scope.alerts = [];
+    $scope.closeAlert = function(index) {
+      $scope.alerts.splice(index, 1);
+    }
 
     $scope.uploadFiles = function (files) {
       $scope.uploadedFiles = files;
@@ -126,15 +159,10 @@ angular.module('frontendApp')
           data: {projectId: $scope.selectedProject.id, files: files},
           arrayKey: ''
         }).then(function (response) {
-          $timeout(function () {
-            $scope.uploadResult = response.data;
-            // refresh dataset list
-            $scope.selectProject($scope.selectedProject);
-          });
+          $scope.alerts.push({type: 'success', message: response.data.message});
+          $scope.datasets = $scope.datasets.concat(response.data.datasets);
         }, function (response) {
-          if (response.status > 0) {
-            $scope.uploadErrorMsg = response.status + ': ' + response.data;
-          }
+          $scope.alerts.push({type: 'danger', message: 'Error uploading files (' + response.status + ')'});
         }, function (evt) {
           $scope.uploadProgress = 
             Math.min(100, parseInt(100.0 * evt.loaded / evt.total));

@@ -43,16 +43,14 @@
           accept="text/csv">Upload CSV datasets
         </div>
         <br>
-        <ul class="list-group">
-          <li class="list-group-item" ng-repeat="d in datasets">
+        <div class="list-group">
+          <a href="#" class="list-group-item {{d === selectedDataset ? 'active' : ''}}" ng-repeat="d in datasets" ng-click="selectDataset(d, $event)">
             <span class="badge">{{d.count}}</span>
             {{d.name}}
-          </li>
-        </ul>
-        <span class="progress" ng-show="uploadProgress >= 0">
-            <div style="width:{{uploadProgress}}%" ng-bind="uploadProgress + '%'"></div>
-        </span>
-        {{uploadErrorMsg}}
+          </a>
+        </div>
+        <uib-progressbar max="100" value="uploadProgress" ng-show="uploadProgress >= 0 && uploadProgress < 100"><span>{{uploadProgress}}%</span></uib-progressbar>
+        <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.message}}</uib-alert>
       </div>
 
     </div>
@@ -60,16 +58,22 @@
     <div class="col-md-10">
       <div gridster="gridsterOpts">
         <ul>
-          <li gridster-item="widget" ng-repeat="widget in widgets">
+          <li gridster-item="widget" ng-repeat="widget in widgets" ng-show="toggleWidget(widget)">
             <div class="box">
               <div class="box-header">
-                <h4>Widget {{$index+1}}</h4>
+                <h4>{{widget.title || 'Widget ' + $index}}</h4>
                 <div class="box-header-btns pull-right">
                   <a title="Remove widget" ng-click="removeWidget(widget, $index)"><i class="glyphicon glyphicon-trash"></i></a>
                 </div>
               </div>
-              <div class="box-content">
-                PLACE COMMERCIAL HERE
+              <div class="box-content" ng-switch on="widget.type">
+                <div ng-switch-when="data">
+                  <div ui-grid="datasetGrid" class="datasetGrid">
+                  </div>
+                </div>
+                <div ng-switch-when="raw">
+                  raw here
+                </div>
               </div>
             </div>
           </li>

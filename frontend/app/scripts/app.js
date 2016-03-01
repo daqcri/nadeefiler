@@ -19,7 +19,8 @@ angular
     'config',
     'ui.bootstrap',
     'gridster',
-    'ngFileUpload'
+    'ngFileUpload',
+    'ui.grid'
   ])
   .config(function ($routeProvider) {
     $routeProvider
