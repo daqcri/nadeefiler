@@ -17,9 +17,9 @@ module.exports = {
     name: {
       type: 'string'
     },
-    // count: {
-    //   type: 'integer'
-    // },
+    count: {
+      type: 'integer'
+    },
     tuples: {
       collection: 'tuple',
       via: 'dataset'

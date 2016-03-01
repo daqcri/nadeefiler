@@ -15,7 +15,8 @@ module.exports = {
 
     var invalidRows = {},
         datasets = {},
-        totalRows = {};
+        totalRows = {},
+        finishedPromises = [];
 
     req.file('files').upload({
       adapter: require('skipper-csv'),
@@ -38,30 +39,45 @@ module.exports = {
         }
         else {
           datasets[fd] = 1;
-          Dataset.create({
+          finishedPromises.push(Dataset.create({
             id: fd,
             name: file.filename,
             project: req.param('projectId')
-          }).exec(function(err, dataset){
+          }).then(function(dataset){
             // we are not using findOrCreate because it is not necessarily atomic
             // https://github.com/balderdashy/waterline/issues/929
             // the solution here is to keep track of datasets by fd
             // tuples could be created even before datasets are created
-            if (err) return res.serverError(err);
             datasets[fd] = dataset;
             createTuple(row);
-          })
+            return dataset;
+          }))
         }
       }
     },
     function (err, files) {
       if (err) return res.serverError(err);
 
-      return res.json({
-        message: "Uploaded " + files.length + " CSV files!",
-        files: files,
-        totalRows: totalRows
-      });
+      return Promise.all(finishedPromises).then(function(datasets){
+        // update totals
+        var updatePromises = _.map(datasets, function(dataset){
+          return Dataset.update(dataset.id, {count: totalRows[dataset.id]})
+            .then(function(updatedDatasets){
+              return updatedDatasets[0];
+            })
+        })
+        return Promise.all(updatePromises).then(function(datasets){
+          return res.json({
+            message: "Uploaded " + files.length + " CSV file(s)!",
+            files: files,
+            totalRows: totalRows,
+            datasets: datasets
+          });
+        })
+      }).catch(function(err){
+        return res.serverError(err);
+      })
+
     });
   },
 
@@ -70,32 +86,8 @@ module.exports = {
     if (!projectId) return res.serverError("Missing projectId");
 
     Dataset.find({project: projectId}).sort("createdAt").exec(function(err, datasets){
-
-        // persisting count when computed to make future requests faster
-        // must be delayed because of async 
-        // if (dataset.count == null) {
-        //   return Tuple.count({dataset: dataset.id})
-        //   .then(function(count){
-        //     return Dataset.update(dataset.id, {count: count})
-        //     .then(function(updatedDatasets){
-        //       return updatedDatasets[0];
-        //     })
-        //   })
-        // }
-        // else {
-        //   return dataset;
-        // }
-
-      var promises = _.map(datasets, function(dataset){
-        return Tuple.count({dataset: dataset.id})
-        .then(function(count){
-          return _.merge(dataset.toJSON(), {count: count})
-        })
-      });
-      return Promise.all(promises).then(function(datasets){
-        return res.json(datasets)
-      });
-    })
+      return res.json(datasets)
+    });
   }
 };
 
