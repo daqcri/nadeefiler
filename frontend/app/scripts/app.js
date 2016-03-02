@@ -20,7 +20,9 @@ angular
     'ui.bootstrap',
     'gridster',
     'ngFileUpload',
-    'ui.grid'
+    'ui.grid',
+    'ui.grid.pagination',
+    'underscore'
   ])
   .config(function ($routeProvider) {
     $routeProvider

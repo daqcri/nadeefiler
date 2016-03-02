@@ -63,7 +63,6 @@ body {
   height: 100%;
   border: 1px solid #ccc;
   background-color: #fff;
-  overflow: scroll;
 }
 .box-header {
   background-color: #eee;
@@ -71,6 +70,7 @@ body {
   border-bottom: 1px solid #ccc;
   cursor: move;
   position: relative;
+  height: 40px;
 }
 .box-header h4 {
   margin-top: 10px;
@@ -78,6 +78,7 @@ body {
 }
 .box-content {
   padding: 10px;
+  padding: 0;
 }
 .box-header-btns {
   top: 15px;
@@ -115,12 +116,14 @@ a {
   }
 }
 
-/*.datasetGrid {
-  width: 100%;
-  height: 100%;
-}
-*/
 .datasetGrid {
+  width: 100%;
+  height: 370px;
+}
+
+
+/*.datasetGrid {
   width: 500px;
   height: 200px;
 }
+*/

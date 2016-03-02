@@ -5,7 +5,7 @@
 
       <!-- project select -->
       <div class="btn-group" uib-dropdown>
-        <button id="single-button" type="button" class="btn btn-primary" uib-dropdown-toggle>
+        <button id="single-button" type="button" class="btn btn-default" uib-dropdown-toggle>
           Project: {{selectedProject ? selectedProject.name : "(Select)"}} <span class="caret"></span>
         </button>
         <ul uib-dropdown-menu role="menu" aria-labelledby="single-button">
@@ -39,26 +39,31 @@
 
       <!-- dataset upload -->
       <div ng-show="selectedProject">
-        <div class="btn btn-default" ngf-select="uploadFiles($files)" multiple
+        <div class="btn btn-primary" ngf-select="uploadFiles($files)" multiple
           accept="text/csv">Upload CSV datasets
         </div>
         <br>
         <div class="list-group">
-          <a href="#" class="list-group-item {{d === selectedDataset ? 'active' : ''}}" ng-repeat="d in datasets" ng-click="selectDataset(d, $event)">
+          <a href="#" class="list-group-item {{d === selectedDataset ? 'active' : ''}}" ng-repeat="d in datasets" ng-click="selectDataset(d, $index, $event)">
             <span class="badge">{{d.count}}</span>
             {{d.name}}
           </a>
         </div>
         <uib-progressbar max="100" value="uploadProgress" ng-show="uploadProgress >= 0 && uploadProgress < 100"><span>{{uploadProgress}}%</span></uib-progressbar>
         <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.message}}</uib-alert>
+        <div class="btn btn-danger" ng-show="selectedDataset" ng-click="deleteDataset()">Delete selected</div>
       </div>
 
     </div>
 
     <div class="col-md-10">
+
+      <div ui-grid="datasetGrid" __ui-grid-auto-resize ui-grid-pagination class="datasetGrid" ng-if="selectedDataset"></div>
+      <div ng-show="loadingData">Loading...</div>
+
       <div gridster="gridsterOpts">
         <ul>
-          <li gridster-item="widget" ng-repeat="widget in widgets" ng-show="toggleWidget(widget)">
+          <li gridster-item="widget" ng-repeat="widget in widgets" ng-if="toggleWidget(widget)">
             <div class="box">
               <div class="box-header">
                 <h4>{{widget.title || 'Widget ' + $index}}</h4>
@@ -66,19 +71,18 @@
                   <a title="Remove widget" ng-click="removeWidget(widget, $index)"><i class="glyphicon glyphicon-trash"></i></a>
                 </div>
               </div>
-              <div class="box-content" ng-switch on="widget.type">
+              <div class="box-content" ng-switch on="widget.type" style="height: {{widgetContentHeight(widget)}}px;">
                 <div ng-switch-when="data">
-                  <div ui-grid="datasetGrid" class="datasetGrid">
-                  </div>
                 </div>
                 <div ng-switch-when="raw">
-                  raw here
+                  data here
                 </div>
               </div>
             </div>
           </li>
         </ul>
-      </div>    
+      </div>
+
     </div>
 
   </div>

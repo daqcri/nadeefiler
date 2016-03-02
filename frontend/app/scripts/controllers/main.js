@@ -8,7 +8,7 @@
  * Controller of the frontendApp
  */
 angular.module('frontendApp')
-  .controller('MainCtrl', function($scope, $resource, ENV, Upload) {
+  .controller('MainCtrl', function($scope, $rootScope, $resource, ENV, Upload, uiGridConstants) {
     // prepare RESTful resources
     // TODO: move into a factory
 
@@ -71,21 +71,81 @@ angular.module('frontendApp')
       }
     };
 
-    $scope.selectDataset = function(dataset, $event) {
+    $scope.selectDataset = function(dataset, index, $event) {
       $scope.selectedDataset = dataset;
+      $scope.selectedDatasetIndex = index;
       if (dataset) {
-        Tuple.query({datasetId: dataset.id}, function(tuples){
-          $scope.datasetGrid.data = tuples;
-        });
+        $scope.datasetGrid.totalItems = dataset.count;
+        $scope.datasetGrid.columnDefs = [];
+        paginationOptions.sort = null;
+        // paginationOptions.pageNumber = 1;
+        // $scope.gridApi.pagination.seek(1);
+        getPage();
       }
       $scope.preventDefault($event);
     };
 
-    $scope.datasetGrid = {};
+    $scope.deleteDataset = function() {
+      if ($scope.selectedDataset) {
+        $scope.selectedDataset.$delete(function(){
+          $scope.datasets.splice($scope.selectedDatasetIndex, 1);
+          $scope.selectDataset(null);
+        });
+      }
+    };
+
+    var paginationOptions = {
+      pageNumber: 1,
+      pageSize: 10,
+      sort: null
+    };
+
+    var getPage = function() {
+
+      $scope.loadingData = true;
+
+      Tuple.query({
+        datasetId: $scope.selectedDataset.id,
+        pageNumber: paginationOptions.pageNumber,
+        pageSize: paginationOptions.pageSize,
+        sortColumn: paginationOptions.sort ? paginationOptions.sort.col : null,
+        sortDirection: paginationOptions.sort ? paginationOptions.sort.dir : null
+      }, function(tuples){
+        $scope.datasetGrid.data = tuples;
+        $scope.gridApi.core.notifyDataChange(uiGridConstants.dataChange.ALL);
+        $scope.loadingData = false;
+      });
+    };
+
+    $scope.datasetGrid = {
+      paginationPageSizes: [10, 25, 50, 100],
+      paginationPageSize: 10,
+      useExternalPagination: true,
+      useExternalSorting: true,
+      onRegisterApi: function(gridApi) {
+        $scope.gridApi = gridApi;
+        gridApi.core.on.sortChanged($scope, function(grid, sortColumns) {
+          if (sortColumns.length === 0) {
+            paginationOptions.sort = null;
+          } else {
+            paginationOptions.sort = {
+              col: sortColumns[0].name,
+              dir: sortColumns[0].sort.direction
+            };
+          }
+          getPage();
+        });
+        gridApi.pagination.on.paginationChanged($scope, function (newPage, pageSize) {
+          paginationOptions.pageNumber = newPage;
+          paginationOptions.pageSize = pageSize;
+          getPage();
+        });    
+      },
+    };
 
     $scope.widgets = [
-      { sizeX: 6, sizeY: 1, row: 0, col: 0, type: 'data', title: 'Raw data view' },
-      { sizeX: 2, sizeY: 0, row: 1, col: 0, type: 'raw', title: 'Raw widget' },
+      { sizeX: 3, sizeY: 2, row: 0, col: 0, type: 'raw', title: 'Type 1 chart' },
+      { sizeX: 2, sizeY: 0, row: 1, col: 0, type: 'raw', title: 'Type 2 chart' },
       { sizeX: 1, sizeY: 0, row: 1, col: 3 }
     ];
 
@@ -168,5 +228,40 @@ angular.module('frontendApp')
         });
       }
     };
+
+    /* NOT WORKING! 
+    $rootScope.$on('gridster-resized', function(sizes, gridster) {
+      console.log('gridster-resized', sizes, gridster);
+    })
+
+    $rootScope.$on('gridster-item-initialized', function(item) {
+      console.log(item);
+    })
+
+    $rootScope.$on('gridster-item-resized', function(item) {
+      console.log(item);
+    })
+    */
+
+  //   $scope.$watch('widgets', function(widgets){
+  //     // var dataWidgets = _.filter(widgets, function(widget){
+  //     //   return widget.type == 'data'}
+  //     // );
+
+  //     // TODO CONSIDER MARGIN WIDTHS
+  //     // TODO handle instead in gridster/window resize
+  //     $scope.widgetContentHeightUnit = angular.element(document.querySelector('div[gridster]'))[0].offsetWidth / $scope.gridsterOpts.columns;
+  //     console.log("widgetContentHeightUnit", $scope.widgetContentHeightUnit);
+  // }, true);
+
+  // $scope.widgetContentHeight = function(widget) {
+  //   var newHeight = Math.floor(widget.sizeY * $scope.widgetContentHeightUnit) - 40 - 2;
+  //   if (widget.type == 'data') {
+  //     newHeight -= 26;  // pagination toolbar
+  //   }
+  //   console.log("some widget height", newHeight);
+  //   // $scope.gridApi.core.notifyDataChange(uiGridConstants.dataChange.ALL);
+  //   return newHeight;
+  // }
 
   });

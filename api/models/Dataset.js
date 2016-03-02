@@ -26,6 +26,14 @@ module.exports = {
     },
     project: {
       model: 'project'
+    },
+    toJSON: function() {
+      var obj = this.toObject();
+      delete obj.tuples;
+      delete obj.project;
+      delete obj.createdAt;
+      delete obj.updatedAt;
+      return obj;
     }
   },
 

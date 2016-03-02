@@ -16,6 +16,13 @@ module.exports = {
     datasets: {
       collection: 'dataset',
       via: 'project'
+    },
+    toJSON: function() {
+      var obj = this.toObject();
+      delete obj.datasets;
+      delete obj.createdAt;
+      delete obj.updatedAt;
+      return obj;
     }
   },
 

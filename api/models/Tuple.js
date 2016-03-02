@@ -11,6 +11,14 @@ module.exports = {
   attributes: {
     dataset: {
       model: 'dataset'
+    },
+    toJSON: function() {
+      var obj = this.toObject();
+      delete obj.dataset;
+      delete obj.createdAt;
+      delete obj.updatedAt;
+      delete obj.id;
+      return obj;
     }
   }
 
