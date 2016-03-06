@@ -10,6 +10,8 @@ If you are using [Homebrew](http://brew.sh/) for Mac:
     
 After NodeJS installation succeeds, change directory to the app root, then install app dependancies using:
 
+    git clone git@github.com:daqcri/nadeefiler.git
+    cd nadeefiler
     npm install
 
 ## Configuration
