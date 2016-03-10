@@ -25,9 +25,15 @@ angular.module('frontendApp')
     );
 
     var Dataset = $resource(
-      ENV.API_BASE_URL + '/datasets/:datasetId?projectId=:projectId',
+      ENV.API_BASE_URL + '/datasets/:action/:datasetId?projectId=:projectId',
       {
         datasetId: '@id'
+      },
+      {
+        profile: {
+          method: 'PUT',
+          params: {action: 'profile'}
+        }
       }
     );
 
@@ -91,6 +97,12 @@ angular.module('frontendApp')
           $scope.datasets.splice($scope.selectedDatasetIndex, 1);
           $scope.selectDataset(null);
         });
+      }
+    };
+
+    $scope.profileDataset = function() {
+      if ($scope.selectedDataset) {
+        Dataset.profile({}, $scope.selectedDataset);
       }
     };
 

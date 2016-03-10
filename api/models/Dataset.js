@@ -39,6 +39,21 @@ module.exports = {
 
   afterDestroy: function(destroyedRecords, cb) {
     Tuple.destroy({dataset: _.pluck(destroyedRecords, 'id')}).exec(cb);
+  },
+
+  profile: function(datasets) {
+    var profileSingle = function(dataset) {
+      sails.hooks.amqp.publish({
+        type: 'profile-all',
+        dataset: _.isObject(dataset) ? dataset.id : dataset
+      });
+    }
+
+    // initiate profiler workers
+    if (_.isArray(datasets))
+      _.forEach(datasets, profileSingle);
+    else
+      profileSingle(datasets);
   }
 
 };

@@ -67,10 +67,12 @@ module.exports = {
             })
         })
         return Promise.all(updatePromises).then(function(datasets){
+          // profile datasets in background
+          Dataset.profile(datasets);
+          // TODO: promise then, send notification to client, or use socket.io
+          // return client response
           return res.json({
             message: "Uploaded " + files.length + " CSV file(s)!",
-            files: files,
-            totalRows: totalRows,
             datasets: datasets
           });
         })
@@ -83,11 +85,19 @@ module.exports = {
 
   find: function(req, res) {
     var projectId = req.param('projectId');
-    if (!projectId) return res.serverError("Missing projectId");
+    if (!projectId) return res.badRequest("Missing projectId");
 
     Dataset.find({project: projectId}).sort("createdAt").exec(function(err, datasets){
       return res.json(datasets)
     });
+  },
+
+  profile: function(req, res) {
+    var datasetId = req.params.id;
+    if (!datasetId) return res.badRequest("Missing trailing /:datasetId ");
+    Dataset.profile(datasetId);
+    // TODO notifiy when done through socket.io
+    return res.ok();
   }
 };
 

@@ -1,0 +1,19 @@
+{
+  "name": "profilers",
+  "version": "0.0.1",
+  "description": "Nadeefiler worker profilers",
+  "main": "worker.js",
+  "scripts": {
+    "start": "node worker",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Hossam Hammady <github@hammady.net>",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^3.3.4",
+    "csv-stringify": "^1.0.2",
+    "lodash": "^4.6.1",
+    "mongodb": "^2.1.7",
+    "tmp": "0.0.28"
+  }
+}

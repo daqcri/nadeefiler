@@ -41,5 +41,10 @@ module.exports = {
 
   cors: {
     allRoutes: false
+  },
+
+  amqp: {
+    url: process.env.CLOUDAMQP_URL
   }
+  
 };

@@ -52,6 +52,7 @@
         <uib-progressbar max="100" value="uploadProgress" ng-show="uploadProgress >= 0 && uploadProgress < 100"><span>{{uploadProgress}}%</span></uib-progressbar>
         <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.message}}</uib-alert>
         <div class="btn btn-danger" ng-show="selectedDataset" ng-click="deleteDataset()">Delete selected</div>
+        <div class="btn btn-primary" ng-show="selectedDataset" ng-click="profileDataset()">Profile selected</div>
       </div>
 
     </div>

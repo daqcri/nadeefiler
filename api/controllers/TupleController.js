@@ -16,7 +16,7 @@ module.exports = {
       sortColumn = req.param('sortColumn') || 'createdAt',
       sortDirection = req.param('sortDirection') || 'ASC';
 
-    if (!datasetId) return res.serverError("Missing datasetId");
+    if (!datasetId) return res.badRequest("Missing datasetId");
 
     Tuple.find({dataset: datasetId})
     .sort(sortColumn + " " + sortDirection)
