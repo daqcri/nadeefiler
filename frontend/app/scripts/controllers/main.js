@@ -8,9 +8,11 @@
  * Controller of the frontendApp
  */
 angular.module('frontendApp')
-  .controller('MainCtrl', function($scope, $rootScope, $resource, ENV, Upload, uiGridConstants) {
+  .controller('MainCtrl', function($scope, $rootScope, $resource, ENV, Upload, uiGridConstants, lodash) {
     // prepare RESTful resources
     // TODO: move into a factory
+
+    var _ = lodash;
 
     var Project = $resource(
       ENV.API_BASE_URL + '/projects/:projectId',

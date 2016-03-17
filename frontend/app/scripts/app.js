@@ -22,7 +22,7 @@ angular
     'ngFileUpload',
     'ui.grid',
     'ui.grid.pagination',
-    'underscore'
+    'ngLodash'
   ])
   .config(function ($routeProvider) {
     $routeProvider
