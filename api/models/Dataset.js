@@ -5,6 +5,8 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
+var profilers = require(sails.config.appPath + '/profilers/config.js');
+
 module.exports = {
 
   autoPK: false,
@@ -30,7 +32,6 @@ module.exports = {
     toJSON: function() {
       var obj = this.toObject();
       delete obj.tuples;
-      delete obj.project;
       delete obj.createdAt;
       delete obj.updatedAt;
       return obj;
@@ -41,11 +42,16 @@ module.exports = {
     Tuple.destroy({dataset: _.pluck(destroyedRecords, 'id')}).exec(cb);
   },
 
-  profile: function(datasets) {
+  profile: function(datasets, projectId) {
     var profileSingle = function(dataset) {
-      sails.hooks.amqp.publish({
-        type: 'profile-all',
-        dataset: _.isObject(dataset) ? dataset.id : dataset
+      _.forEach(profilers, function(profiler){
+        sails.hooks.amqp.publish({
+          type: 'profile',
+          profiler: profiler,
+          dataset: _.isObject(dataset) ? dataset.id : dataset
+        }, {
+          correlationId: projectId
+        });
       });
     }
 

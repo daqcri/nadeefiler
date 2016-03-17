@@ -18,24 +18,27 @@ function connectAMQP(url, queue) {
     .then(function(ch) {
       ch.assertQueue(queue, {durable: true});
       ch.prefetch(3); // don't handle more than n jobs at a time
-      console.log("Waiting for messages in %s. To exit press CTRL+C", queue);
+      console.log("Waiting for messages in '%s'...", queue);
       ch.consume(queue, function(msg) {
         var task = JSON.parse(msg.content);
-        var taskId = "task-" + msg.fields.consumerTag;
+        var taskId = "task[" + msg.content + "]:" + msg.fields.consumerTag;
         console.log("Received", task);
         console.time(taskId);
+        task.replyTo = msg.properties.replyTo;
+        task.correlationId = msg.properties.correlationId;
         handle(task)
-        .then(function(){
+        .then(function(results){
           console.log("Handled", task);
-          // TODO send back results
+          sendReply(task, results);
+          ch.ack(msg);
         })
         .catch(function(err){
           console.warn("Error handling task", task, err)
-          // TODO send back error
+          sendReply(task, null, err);
+          ch.nack(msg); // permanent failure? don't nack
         })
         .finally(function(){
           console.timeEnd(taskId);
-          ch.ack(msg);
         })
       }, {noAck: false});
       return {amqpConnection: conn, amqpChannel: ch};
@@ -45,111 +48,169 @@ function connectAMQP(url, queue) {
 
 function handle(task) {
   switch(task.type) {
-    case 'profile-all':
-      // requeue all profilers
-      _.forEach(profilers, function(profiler, key){
-        amqpChannel.sendToQueue(queue, new Buffer(JSON.stringify({
-          type: 'profile',
-          profiler: key,
-          dataset: task.dataset
-        })), {
-          persistent: true,
-          contentType: 'application/json'
-        });
-      })
-      return Promise.resolve(true);
     case 'profile':
       return new Promise(function(resolve, reject){
-        tmp.tmpName(function (err, filename) {
-          // TODO promisify tmpName to catch error later
-          if (err) reject("Error creating temporary file: " + err);
-          console.log("Generated temporary filename at: " + filename);
-          var write = fs.createWriteStream(filename);
+        if (!profilers[task.profiler])
+          reject("Unknown profiler: " + task.profiler);
+        else {
           console.time("pipeTuples");
-          pipeTuples(task.dataset, write)
-          .then(function(){
-            console.timeEnd("pipeTuples");
-            var func = profilers[task.profiler];
-            if (!func) reject("Unknown profiler: " + task.profiler);
-            console.log("Running profiler " + task.profiler);
-            // TODO benchmark running time for profiler
-            return func(filename).then(resolve);
+          var filter = {dataset: task.dataset, profiler: task.profiler};
+          pipeTuples(task.dataset, profilers[task.profiler])
+          .then(function(results){
+            console.log(results);
+            // insertMany results after adding dataset/profiler/timestamp
+            _.forEach(results, function(result){
+              _.merge(result, filter, {createdAt: new Date()});
+            })
+            return db.collection('result').deleteMany(filter)
+            .then(function(){
+              db.collection('result').insertMany(results)
+            })
+            .then(function(){return results});
           })
-          .catch(reject);
-        });
+          .then(resolve)
+          .catch(reject)
+          .finally(function(){
+            console.timeEnd("pipeTuples");            
+          })
+        }
       });
+    default:
+      Promise.reject("Unknown task of type '%s'", task.type);
   }
 }
 
-function pipeTuples(dataset, destination) {
+function sendReply(task, results, error) {
+  amqpChannel.sendToQueue(
+    task.replyTo,
+    new Buffer(JSON.stringify(error ? {error: error} : results)),
+    {correlationId: task.correlationId});
+}
+
+function pipeTuples(dataset, profiler) {
   return new Promise(function(resolve, reject){
-    var keys = null;
-    destination.on('finish', resolve);
 
     // create mongo query
     var query = {dataset: dataset},
         projection = {_id: 0, createdAt: 0, updatedAt: 0, dataset: 0};
 
+    var readTuples = function(keys) {
+      // stream query results
+      var collection = db.collection('tuple');
+      if (profiler.selector) {
+        // custom data selector
+        return profiler.selector(collection, dataset, keys);
+      }
+      else if (profiler.onValue) {
+        // default data selector: return all values
+        return _.reduce(keys, function(hash, key){
+          return _.set(hash, key, collection.find(query).project(_.set({}, key, 1)));
+        }, {});
+      }
+      else {
+        // default data selector: return all tuples
+        return collection.find(query).project(projection)
+        .stream({
+          transform: function(tuple) { 
+            // return columns in the same order for each tuple
+            return _.map(keys, function(key){return tuple[key]});
+          }
+        });
+      }
+    }
+
     // extract header from first tuple
     db.collection('tuple').find(query, {limit: 1}).project(projection).next()
     .then(function(tuple){
-      // TODO throw error if tuple is null, make sure the current promise is rejected as well
       if (!tuple)
         reject("Empty dataset");
       else
         return _.keys(tuple);
     })
     .then(function(keys){
-      var csvStringify = csvStringifier({header: true, columns: keys})
-      // stream query results
-      db.collection('tuple').find(query).project(projection)
-      .stream({
-        transform: function(tuple) { 
-          // return columns in the same order for each tuple
-          return _.map(keys, function(key){return tuple[key]});
-        }
-      })
-      .pipe(csvStringify)
-      .pipe(destination)
+      if (profiler.onFile) {
+        var csvStringify = csvStringifier({header: true, columns: keys})
+        tmp.tmpNameAsync()
+        .then(function(filename){
+          console.log("Generated temporary filename at: " + filename);
+          var write = fs.createWriteStream(filename);
+          write.on('finish', function(){
+            profiler.onFile(filename)
+            .then(function(){
+              resolve(profiler.onFinish());
+            })
+            .catch(reject);
+            // TODO rejecting nacks the task, it is sent again indifinetly
+            // is this correct or we should report permanent failure?
+          });
+          readTuples(keys).pipe(csvStringify).pipe(write);
+        })
+        .catch(function(err) {
+          reject("Error creating temporary file: " + err);
+        })
+      }
+      else if (profiler.onTuple) {
+        var cursor = readTuples(keys);
+        cursor.on("data", profiler.onTuple);
+        cursor.on("end", function(){
+          resolve(profiler.onFinish());
+        });
+        cursor.stream();
+        // TODO test premature resolve (better profiler resolves when all tuples procesed?)
+      }
+      else if (profiler.onValue) {
+        Promise.all(_.map(readTuples(keys), function(cursor, key){
+          cursor.on("data", function(value){
+            profiler.onValue(key, value);
+          });
+          return new Promise(function(columnResolve, columnReject){
+            cursor.on("end", function(){
+              var result = profiler.onFinish(key);
+              columnResolve(_.merge({key: key}, result));
+            });
+            // TODO: curson on error reject?
+            cursor.stream();
+          });
+        }))
+        .then(resolve);
+        // TODO .catch(function(error){})
+      }
     })
 
   });
 };
 
-// TODO move profilers definition in external files, to be easily pluggable
-var profilers = {
-  messytables: function(csv) {
-    var file = __dirname + '/types/messytables/run.py',
-        args = ['-f', csv],
-        options = {cwd: __dirname + '/types/messytables'};
-    return new Promise(function(resolve, reject){
-      // TODO optimize execution by rewriting in nodejs using streams
-      // However, the advantage of child_process is that it will run
-      //   on a differnt cpu on a multi-core machine
-      //   but this advantage is not valid on heroku, the solution is more node workers
-      child_process.execFile(file, args, options, function(error, stdout, stderr) {
-        if (error)
-          reject(error);
-        else {
-          console.log(stdout);
-          resolve();  // TODO resolve with result
-        }
-      });
-    })
-  }
-};
+function loadProfilers(config) {
+  // load and validate profilers
+  var errors = 0;
+  var profilers = _.reduce(config, function(profilers, profilerName) {
+    var profiler = require("./" + profilerName);
+    if (!_.isFunction(profiler.onFinish)) {
+      console.error("Profiler '%s' must contain onFinish function that returns profiling results", profilerName);
+      errors++;
+    }
+    if (!_.isFunction(profiler.onFile) && !_.isFunction(profiler.onTuple) && !_.isFunction(profiler.onValue)) {
+      console.error("Profiler '%s' must contain one of onFile, onTuple or onValue processor functions", profilerName);
+      errors++;
+    }
+    return _.set(profilers, profilerName, profiler);
+  }, {});
+  if (errors > 0) process.exit(1);
+  return profilers;
+}
 
 var _ = require('lodash');
 var Promise = require("bluebird");
-var child_process = require("child_process");
 var fs = require('fs');
-var tmp = require('tmp');
+var tmp = require('tmp'); Promise.promisifyAll(tmp);
 var MongoClient = require('mongodb').MongoClient;
 var csvStringifier = require('csv-stringify');
 var urlMongo = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/nadeefiler_dev';
 var urlAMQP = process.env.CLOUDAMQP_URL || "amqp://localhost";
 var queue = process.env.AMQP_QUEUE || 'sails';
 var amqpConnection, amqpChannel, db;
+var profilers = loadProfilers(require('./config'));
+console.log(profilers);
 
 connectMongo(urlMongo)
 .then(function(mongoDb){

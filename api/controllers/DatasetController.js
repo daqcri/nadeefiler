@@ -16,7 +16,8 @@ module.exports = {
     var invalidRows = {},
         datasets = {},
         totalRows = {},
-        finishedPromises = [];
+        finishedPromises = [],
+        projectId = req.param('projectId');
 
     req.file('files').upload({
       adapter: require('skipper-csv'),
@@ -42,7 +43,7 @@ module.exports = {
           finishedPromises.push(Dataset.create({
             id: fd,
             name: file.filename,
-            project: req.param('projectId')
+            project: projectId
           }).then(function(dataset){
             // we are not using findOrCreate because it is not necessarily atomic
             // https://github.com/balderdashy/waterline/issues/929
@@ -68,8 +69,7 @@ module.exports = {
         })
         return Promise.all(updatePromises).then(function(datasets){
           // profile datasets in background
-          Dataset.profile(datasets);
-          // TODO: promise then, send notification to client, or use socket.io
+          Dataset.profile(datasets, projectId);
           // return client response
           return res.json({
             message: "Uploaded " + files.length + " CSV file(s)!",
@@ -94,9 +94,10 @@ module.exports = {
 
   profile: function(req, res) {
     var datasetId = req.params.id;
+    var projectId = req.param('project');
     if (!datasetId) return res.badRequest("Missing trailing /:datasetId ");
-    Dataset.profile(datasetId);
-    // TODO notifiy when done through socket.io
+    if (!projectId) return res.badRequest("Missing project");
+    Dataset.profile(datasetId, projectId);
     return res.ok();
   }
 };

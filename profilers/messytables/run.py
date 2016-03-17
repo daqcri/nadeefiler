@@ -33,9 +33,12 @@ def process(filename):
   # guess column types:
   column_types = type_guess(row_set.sample, strict=False, all_guesses=True)
 
-  for column_type in column_types:
+  # import ipdb; ipdb.set_trace()
+
+  for i, column_type in enumerate(column_types):
+    print "%s;" % (headers[i]),
     for guess, score in column_type:
-      print "%s:%d" % (guess, score),
+      print "%s:%d;" % (guess, score),
     print
 
 def main(argv):

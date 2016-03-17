@@ -44,6 +44,31 @@ angular.module('frontendApp')
       }
     );
 
+    // sockets connection
+    // TODO jshint complains about io being undefined
+    var sailsSocket = io.sails.connect(ENV.SOCKETIO_BASE_URL);
+    sailsSocket.on('connect', function() {
+      console.log("Socket connected!");
+    });
+    sailsSocket.on('profilerResults', function(data) {
+      console.log("Received socket data", data);
+    });
+
+    var socketCommand = function(url) {
+      console.log("requesting socket via url: " + url);
+      sailsSocket.get(ENV.API_BASE_URL + url, function responseFromServer (body, response) {
+        console.log("The server responded with status " + response.statusCode + " and said: ", body);
+      });
+    }
+
+    var socketSubscribe = function(project) {
+      socketCommand('/projects/subscribe/' + project.id);
+    };
+
+    var socketUnsubscribe = function(project) {
+      socketCommand('/projects/unsubscribe/' + project.id);
+    };
+
     Project.query(function(projects){
       $scope.projects = projects;
     });
@@ -68,11 +93,20 @@ angular.module('frontendApp')
     };
 
     $scope.selectProject = function(project) {
+      if ($scope.selectedProject === project) {
+        console.log("selecting same project, doing nothing");
+        return;
+      }
+
+      if ($scope.selectedProject)
+        socketUnsubscribe($scope.selectedProject);
+
       $scope.selectedProject = project;
       if (project) {
         Dataset.query({projectId: project.id}, function(datasets){
           $scope.datasets = datasets;
           $scope.selectDataset(null);
+          socketSubscribe(project);
         });
       }
     };
