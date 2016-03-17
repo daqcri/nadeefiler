@@ -127,3 +127,36 @@ a {
   height: 200px;
 }
 */
+
+/* BEGIN profiler specific styles, should isolate */
+.messystreams-badge-boolean {
+  color: white;
+  background-color: green;
+}
+
+.messystreams-badge-integer {
+  color: white;
+  background-color: blue;
+}
+
+.messystreams-badge-float {
+  color: black;
+  background-color: cyan;
+}
+
+.messystreams-badge-date {
+  color: black;
+  background-color: lightgreen;
+}
+
+.messystreams-badge-string {
+  color: white;
+  background-color: gray;
+}
+
+.messystreams-badge-null {
+  color: white;
+  background-color: red;
+}
+
+/* END profiler specific styles, should isolate */

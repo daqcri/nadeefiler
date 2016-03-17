@@ -78,6 +78,16 @@
                 <div ng-switch-when="raw">
                   data here
                 </div>
+                <div ng-switch-when="datatypes">
+                  <div class="list-group">
+                    <a class="list-group-item" ng-repeat="result in selectedDataset.results.messystreams">
+                      <span class='badge messystreams-badge-{{type.name}}' ng-repeat="type in result.types">
+                      {{type.name}}{{type.count == selectedDataset.count ? '' : ": " + type.count + " (" + type.percentage + "%)"}}
+                      </span>
+                      {{result.key}}
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </li>

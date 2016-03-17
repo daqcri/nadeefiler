@@ -46,14 +46,28 @@ angular.module('frontendApp')
       }
     );
 
+    var Result = $resource(
+      ENV.API_BASE_URL + '/results?datasetId=:datasetId',
+      {
+        datasetId: '@id'
+      }
+    );
+
     // sockets connection
     // TODO jshint complains about io being undefined
     var sailsSocket = io.sails.connect(ENV.SOCKETIO_BASE_URL);
     sailsSocket.on('connect', function() {
       console.log("Socket connected!");
     });
-    sailsSocket.on('profilerResults', function(data) {
-      console.log("Received socket data", data);
+    sailsSocket.on('profilerResults', function(results) {
+      console.log("Received socket data for event 'profilerResults'", results);
+      var datasetId = results[0].dataset; // we assume all results belong to the same dataset
+      var dataset = _.find($scope.datasets, function(dataset){return dataset.id === datasetId});
+      if (dataset && dataset.results && results.length > 0) { // merge results only if dataset.results has been requested before fully
+        _.assign(dataset.results, adaptDatasetResults(results, dataset.count));
+        console.log("Dataset with new results", dataset);
+        $scope.$apply();  // because sailsSocket.on happens outside angular scope
+      }
     });
 
     var socketCommand = function(url) {
@@ -70,6 +84,28 @@ angular.module('frontendApp')
     var socketUnsubscribe = function(project) {
       socketCommand('/projects/unsubscribe/' + project.id);
     };
+
+    var adaptDatasetResults = function(results, datasetCount) {
+      // pivot results over "profiler" key
+      var groups = _.groupBy(results, function(result){return result.profiler;});
+      // TODO isolate messystreams logic in its module
+      if (groups.messystreams) {
+        groups.messystreams = _.map(groups.messystreams, function(result){
+          return {key: result.key, types: resultSorter(result, datasetCount)}
+        })
+      }
+      return groups;
+    };
+
+    var resultSorter = function(result, datasetCount) {
+      return _(result)
+        .keys()
+        .without('key', 'profiler', '$$hashKey', '_id', 'createdAt', 'dataset')
+        .map(function(k){return {name: k, count: result[k], percentage: Math.round(result[k]*100/datasetCount)}})
+        .filter(function(o){return o.count !== 0})
+        .sortBy('count')
+        .value();
+    }
 
     Project.query(function(projects){
       $scope.projects = projects;
@@ -116,6 +152,7 @@ angular.module('frontendApp')
     $scope.selectDataset = function(dataset, index, $event) {
       $scope.selectedDataset = dataset;
       $scope.selectedDatasetIndex = index;
+
       if (dataset) {
         $scope.datasetGrid.totalItems = dataset.count;
         $scope.datasetGrid.columnDefs = [];
@@ -123,6 +160,14 @@ angular.module('frontendApp')
         // paginationOptions.pageNumber = 1;
         // $scope.gridApi.pagination.seek(1);
         getPage();
+        // request dataset results
+        if (!dataset.results) {
+          Result.query({
+            datasetId: dataset.id
+          }, function(results){
+            dataset.results = adaptDatasetResults(results, dataset.count);
+          });
+        }
       }
       $scope.preventDefault($event);
     };
@@ -191,9 +236,10 @@ angular.module('frontendApp')
       },
     };
 
+    // TODO put all widget definitions here
+    // later define in separate modular files
     $scope.widgets = [
-      { sizeX: 3, sizeY: 2, row: 0, col: 0, type: 'raw', title: 'Type 1 chart' },
-      { sizeX: 2, sizeY: 0, row: 1, col: 0, type: 'raw', title: 'Type 2 chart' },
+      { sizeX: 3, sizeY: 2, row: 0, col: 0, type: 'datatypes', title: 'Data types' },
       { sizeX: 1, sizeY: 0, row: 1, col: 3 }
     ];
 
@@ -229,6 +275,7 @@ angular.module('frontendApp')
         }
     };
 
+    // TODO embed toggle logic in each widget definition module
     $scope.toggleWidget = function(widget) {
       if (!$scope.selectedDataset) {return null;}
 
@@ -236,6 +283,9 @@ angular.module('frontendApp')
         case 'data':
         case 'raw':
           return true;
+        case 'datatypes':
+          var results = $scope.selectedDataset.results;
+          return results && results.messystreams;
         default:
           return false;
           // TODO: toggle widget based on its type/status
@@ -312,4 +362,6 @@ angular.module('frontendApp')
   //   return newHeight;
   // }
 
-  });
+  })
+
+  ;
