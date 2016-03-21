@@ -33,7 +33,7 @@
   "scripts": {
     "debug": "node debug app.js",
     "start": "node app.js",
-    "postinstall": "cd frontend && npm install && node_modules/bower/bin/bower install && grunt build"
+    "postinstall": "cd profilers && npm install && cd ../frontend && npm install && node_modules/bower/bin/bower install && grunt build"
   },
   "main": "app.js",
   "repository": {
