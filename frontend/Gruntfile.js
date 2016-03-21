@@ -518,9 +518,4 @@ module.exports = function (grunt) {
     'build'
   ]);
 
-  grunt.registerTask('deploy', [
-    'newer:jshint',
-    'newer:jscs',
-    'build'
-  ]);
 };
