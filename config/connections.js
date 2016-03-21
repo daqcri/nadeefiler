@@ -57,17 +57,23 @@ module.exports.connections = {
   *                                                                          *
   ***************************************************************************/
   // localMongo: {
-  //   adapter: 'sails-mongo',
-  //   host: 'localhost',
-  //   port: 27017,
-  //   database: 'nadeefiler_dev'
+  //  adapter: 'sails-mongo',
+  //  host: 'localhost',
+  //  port: 27017,
+  //  database: 'nadeefiler_dev'
   // },
 
-  productionMongo: {
+  // productionMongo: {
+  //   adapter: 'sails-mongo',
+  //   url: process.env.MONGOLAB_URI
+  // },
+
+  universalMongo: {
     adapter: 'sails-mongo',
-    url: process.env.MONGOLAB_URI
+    url: process.env.MONGOLAB_URI || 'mongodb://localhost:27017/nadeefiler_dev'
   },
 
+    
   /***************************************************************************
   *                                                                          *
   * PostgreSQL is another officially supported relational database.          *
