@@ -116,6 +116,6 @@ npm-debug.log
 nbproject
 .idea
 .node_history
-config.js
+frontend/app/scripts/config.js
 old-assets
 *.sublime-*
