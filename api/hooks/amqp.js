@@ -32,6 +32,7 @@ module.exports = function amqp(sails) {
             ch.consume(q, function(msg){
               console.log("Received reply from worker: " + msg.content);
               // send back to client through socket
+              // TODO this should move out to the caller of the publish
               sails.sockets.broadcast(msg.properties.correlationId, "profilerResults", JSON.parse(msg.content.toString()));
             }, {noAck: true});
             cb();

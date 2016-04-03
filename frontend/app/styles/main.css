@@ -144,6 +144,11 @@ a {
   background-color: cyan;
 }
 
+.messystreams-badge-percent {
+  color: white;
+  background-color: darkblue;
+}
+
 .messystreams-badge-date {
   color: black;
   background-color: lightgreen;

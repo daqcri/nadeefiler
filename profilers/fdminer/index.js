@@ -1,13 +1,18 @@
 var _ = require('lodash');
-var results;
+var Promise = require("bluebird");
 
 // TODO catch js errors in this file
 
+var _resultsCatcher;
+
 module.exports = {
+  configure: function(resultsCatcher, options) {
+    _resultsCatcher = resultsCatcher;
+  },
   selector: function(mongoCollection, dataset, keys) {
     // TODO: this is a test selector that just limits results by 3
-    results = _.map(keys, function(key){
-      return {key: key};
+    _.each(keys, function(key){
+      _resultsCatcher.write({key: key});
     });
     return mongoCollection.find({dataset: dataset}).limit(3);
   },
@@ -15,6 +20,7 @@ module.exports = {
     console.log("fdminer", tuple);
   },
   onFinish: function() {
-    return results;
+    console.log("in fdminer onFinish")
+    _resultsCatcher.end();
   }
 };

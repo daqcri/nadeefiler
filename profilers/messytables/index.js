@@ -1,6 +1,7 @@
 var _ = require('lodash');
+var Promise = require("bluebird");
 var child_process = require("child_process");
-var keys, results;
+var keys;
 
 var parseRawResults = function(rawResults) {
   return _.map(_.compact(rawResults.split("\n")), function(columnResults) {
@@ -11,7 +12,12 @@ var parseRawResults = function(rawResults) {
   });
 }
 
+var _resultsCatcher;
+
 module.exports = {
+  configure: function(resultsCatcher, options) {
+    _resultsCatcher = resultsCatcher;
+  },
   onFile: function(csv) {
     var file = __dirname + '/run.py',
         args = ['-f', csv],
@@ -26,13 +32,15 @@ module.exports = {
           reject(error);
         else {
           console.log(stdout);
-          results = parseRawResults(stdout);
+          _.each(parseRawResults(stdout), function(result){
+            _resultsCatcher.write(result);
+          });
           resolve();
         }
       });
     })
   },
   onFinish: function() {
-    return results;
+    _resultsCatcher.end();
   }
 };
