@@ -38,44 +38,19 @@ Clone project, change directory to its root, then install dependencies of web se
     # change dir
     cd nadeefiler
     
-    # install server dependencies
+    # install dependencies
     npm install
     
-Now change directory to frontend and install its dependencies
-
-    # change dir to frontend
-    cd frontend
+That's it. The previous `npm install` command will trigger the `postinstall` script that will install
+dependencies of `frontend` and `profilers` sub-directories.
     
-    # install frontend dependencies
-    npm install 
-    node_modules/bower/bin/bower install
-
-Finally change directory to background profilers directory and install its dependencies
-
-    # change dir to profilers
-    cd profilers
-    
-    # install profilers dependencies
-    npm install 
-
-## Configuration
-
-You need to specify the local Mongo connection in `config/connections.js`. Comment the lines mentioning
-`productionMongo` object and uncomment those for `localMongo`.
-
 ## Running
 
 Launch a new terminal and run
 
-    # start web server
+    # start (sails) web server
     cd nadeefiler
     npm start
-
-Lanuch another terminal and run
-
-    # start frontend asset server
-    cd nadeefiler/frontend
-    grunt serve
 
 Launch yet another terminal and run
 
@@ -84,3 +59,13 @@ Launch yet another terminal and run
     npm start
     
 No you can point your browser to: [http://127.0.0.1:9000](http://127.0.0.1:9000) to see the running app.
+
+## Development
+These are some notes to keep in mind while developing on your local machine:
+
+- `frontend` directory hosts the static angular app. If you run a `grunt serve` inside it, it will watch for changes
+to any files and reload the `livereload` server with your changes. The `livereload` server runs on a separate port.
+- Whenever you change the backend `sails` app, you need to restart the `sails` web server.
+- Both `frontend` and `profilers` are npm packages that have their own dependencies and essentially `package.json`.
+Moreover, `frontend` has its own `bower` dependencies. Use `npm install --save` and `bower install --save` to add
+new dependencies and commit your changes to `package.json` and `bower.json`.
