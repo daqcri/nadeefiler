@@ -39,9 +39,6 @@
 
       <!-- dataset upload -->
       <div ng-show="selectedProject">
-        <div class="btn btn-primary" ngf-select="uploadFiles($files)" multiple
-          accept="text/csv">Upload CSV datasets
-        </div>
         <br>
         <div class="list-group">
           <a href="#" class="list-group-item {{d === selectedDataset ? 'active' : ''}}" ng-repeat="d in datasets" ng-click="selectDataset(d, $index, $event)">
@@ -51,8 +48,14 @@
         </div>
         <uib-progressbar max="100" value="uploadProgress" ng-show="uploadProgress >= 0 && uploadProgress < 100"><span>{{uploadProgress}}%</span></uib-progressbar>
         <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.message}}</uib-alert>
-        <div class="btn btn-danger" ng-show="selectedDataset" ng-click="deleteDataset()">Delete selected</div>
-        <div class="btn btn-primary" ng-show="selectedDataset" ng-click="profileDataset()">Profile selected</div>
+        <div class="btn-group-vertical" role="toolbar">
+          <div class="btn btn-primary" ngf-select="uploadFiles($files)" multiple
+            accept="text/csv">Upload CSV...
+          </div>
+          <div class="btn btn-danger" role="group" ng-show="selectedDataset" ng-click="deleteDataset()">Delete</div>
+          <div class="btn btn-default" role="group" ng-show="selectedDataset" ng-click="profileDataset()">Profile</div>
+          <div class="btn btn-default" role="group" ng-show="selectedDataset" ng-click="resetDatasetWidgets()">Reset widgets</div>
+        </div>
       </div>
 
     </div>
@@ -64,7 +67,7 @@
 
       <div gridster="gridsterOpts">
         <ul>
-          <li gridster-item="widget" ng-repeat="widget in widgets" ng-if="toggleWidget(widget)">
+          <li gridster-item="widget" ng-repeat="widget in selectedDataset.widgets" ng-if="toggleWidget(widget)">
             <div class="box">
               <div class="box-header">
                 <h4>{{widget.title || 'Widget ' + $index}}</h4>
@@ -79,14 +82,57 @@
                   data here
                 </div>
                 <div ng-switch-when="datatypes">
-                  <div class="list-group">
+                  <div class="box-content-actions-header">
+                    <span class="box-content-actions-label">
+                    {{selectedDataset.results.messystreams.length}} columns
+                    </span>
+                    <span class="box-content-actions-label">Show:</span>
+                    <span class="{{widgetTypeClass(widget, 'list')}}" ng-click="toggleWidgetType(widget, 'list')">List</span>
+                    <span class="{{widgetTypeClass(widget, 'chart')}}" ng-click="toggleWidgetType(widget, 'chart')">Chart</span>
+                  </div>
+                  
+                  <div ng-if="widget.vizType === 'list'" class="list-group">
                     <a class="list-group-item" ng-repeat="result in selectedDataset.results.messystreams">
-                      <span class='badge messystreams-badge-{{type.name}}' ng-repeat="type in result.types">
+                      <span class="badge {{datatypeHasHistogram(type) ? 'messystreams-badge' : ''}} messystreams-badge-{{type.name}}"
+                      ng-repeat="type in result.types"
+                      ng-click="datatypeHasHistogram(type) ? datatypeClicked(result.key, type.name) : ''"
+                      title="{{datatypeHasHistogram(type) ? 'Show histogram' : ''}}">
                       {{type.name}}{{type.count == selectedDataset.count ? '' : ": " + type.count + " (" + type.percentage + "%)"}}
                       </span>
                       {{result.key}}
                     </a>
                   </div>
+
+                  <div ng-if="widget.vizType === 'chart'">
+                    <highchart id="chart_{{selectedDataset.id}}_datatypes_{{$index}}" config="widget.chartConfig"></highchart>
+                  </div>
+
+                </div>
+
+                <div ng-switch-when="histogram">
+                  <div class="box-content-actions-header">
+                    <span class="box-content-actions-label">
+                    {{selectedDataset.histograms[widget.key][widget.datatype].length}} values
+                    </span>
+                    <span class="box-content-actions-label">Show:</span>
+                    <span class="{{widgetTypeClass(widget, 'list')}}" ng-click="toggleWidgetType(widget, 'list')">Top 20</span>
+                    <span class="{{widgetTypeClass(widget, 'chart')}}" ng-click="toggleWidgetType(widget, 'chart')">Chart</span>
+                  </div>
+                  
+                  <div ng-if="widget.vizType === 'list'" class="list-group">
+                    <a class="list-group-item"
+                    ng-repeat="result in selectedDataset.histograms[widget.key][widget.datatype] | orderBy:'-count' | limitTo:20 ">
+                      <span class="badge">
+                      {{result.count}} ({{result.count*100/selectedDataset.count | number:0}}%)
+                      </span>
+                      {{result.value}}
+                    </a>
+                  </div>
+
+                  <div ng-if="widget.vizType === 'chart'">
+                    <highchart id="chart_{{selectedDataset.id}}_{{$index}}" config="widget.chartConfig"></highchart>
+                  </div>
+
                 </div>
               </div>
             </div>

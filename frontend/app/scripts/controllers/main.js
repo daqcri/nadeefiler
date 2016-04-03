@@ -8,7 +8,17 @@
  * Controller of the frontendApp
  */
 angular.module('frontendApp')
-  .controller('MainCtrl', function($scope, $rootScope, $resource, ENV, Upload, uiGridConstants, lodash) {
+  .controller('MainCtrl', function(
+    $scope,
+    $rootScope,
+    $resource,
+    ENV,
+    Upload,
+    uiGridConstants,
+    lodash,
+    $q,
+    highchartsNG
+  ) {
     // prepare RESTful resources
     // TODO: move into a factory
 
@@ -47,7 +57,7 @@ angular.module('frontendApp')
     );
 
     var Result = $resource(
-      ENV.API_BASE_URL + '/results?datasetId=:datasetId',
+      ENV.API_BASE_URL + '/results?datasetId=:datasetId&key=:key&histogram=:histogram',
       {
         datasetId: '@id'
       }
@@ -59,13 +69,12 @@ angular.module('frontendApp')
     sailsSocket.on('connect', function() {
       console.log("Socket connected!");
     });
-    sailsSocket.on('profilerResults', function(results) {
-      console.log("Received socket data for event 'profilerResults'", results);
-      var datasetId = results[0].dataset; // we assume all results belong to the same dataset
+    sailsSocket.on('profilerResults', function(task) {
+      console.log("Received socket data for event 'profilerResults'", task);
+      var datasetId = task.dataset;
       var dataset = _.find($scope.datasets, function(dataset){return dataset.id === datasetId});
-      if (dataset && dataset.results && results.length > 0) { // merge results only if dataset.results has been requested before fully
-        _.assign(dataset.results, adaptDatasetResults(results, dataset.count));
-        console.log("Dataset with new results", dataset);
+      if (dataset) {
+        getResults(dataset);
         $scope.$apply();  // because sailsSocket.on happens outside angular scope
       }
     });
@@ -85,16 +94,39 @@ angular.module('frontendApp')
       socketCommand('/projects/unsubscribe/' + project.id);
     };
 
-    var adaptDatasetResults = function(results, datasetCount) {
+    var adaptDatasetResults = function(results, dataset) {
       // pivot results over "profiler" key
       var groups = _.groupBy(results, function(result){return result.profiler;});
       // TODO isolate messystreams logic in its module
       if (groups.messystreams) {
-        groups.messystreams = _.map(groups.messystreams, function(result){
-          return {key: result.key, types: resultSorter(result, datasetCount)}
+        var unsorted = _(groups.messystreams)
+        .map(function(result){
+          return {key: result.key, types: resultSorter(result, dataset.count), result: result}
         })
+        .groupBy(function(result){return result.key})
+        .value();
+        var keys = _.map($scope.datasetGrid.columnDefs, 'name');
+        dataset.keys = keys;
+        groups.messystreams = _.map(keys, function(key){return unsorted[key][0];})
+
+        // setup widget chart
+        var widgets = _.filter(dataset.widgets, function(w){return w.type === 'datatypes'});
+        if (widgets.length > 0) {
+          widgets[0].chartConfig.xAxis.categories = keys;
+          var types = ["string", "date", "percent", "float", "integer", "boolean", "null"];
+          var colors = ["gray", "lightgreen", "darkblue", "cyan", "blue", "green", "red"];
+          widgets[0].chartConfig.series = _.map(types, function(type, index){
+            return {
+              name: type, color: colors[index],
+              data: _.map(keys, function(key){
+                return unsorted[key][0].result[type];
+              })
+            }
+          })
+        }
       }
-      return groups;
+
+      dataset.results = groups;
     };
 
     var resultSorter = function(result, datasetCount) {
@@ -149,6 +181,32 @@ angular.module('frontendApp')
       }
     };
 
+    var getResults = function(dataset) {
+      Result.query({
+        datasetId: dataset.id
+      }, function(results){
+        adaptDatasetResults(results, dataset);
+      });
+    }
+
+    var getHistogram = function(dataset, key, type, limit) {
+      var deferred = $q.defer();
+
+      Result.query({
+        datasetId: dataset.id,
+        histogram: type,
+        key: key,
+        limit: limit
+      }, function(histogram){
+        if (!dataset.histograms) dataset.histograms = {};
+        if (!dataset.histograms[key]) dataset.histograms[key] = {};
+        dataset.histograms[key][type] = histogram;
+        deferred.resolve(histogram);
+      });
+
+      return deferred.promise;
+    }
+
     $scope.selectDataset = function(dataset, index, $event) {
       $scope.selectedDataset = dataset;
       $scope.selectedDatasetIndex = index;
@@ -159,14 +217,15 @@ angular.module('frontendApp')
         paginationOptions.sort = null;
         // paginationOptions.pageNumber = 1;
         // $scope.gridApi.pagination.seek(1);
-        getPage();
-        // request dataset results
-        if (!dataset.results) {
-          Result.query({
-            datasetId: dataset.id
-          }, function(results){
-            dataset.results = adaptDatasetResults(results, dataset.count);
-          });
+        getPage().then(function(){
+          // request dataset results
+          // this is chained after getPage because results needs physical order of keys to sort itself
+          if (!dataset.results) {
+            getResults(dataset);
+          }
+        })
+        if (!dataset.widgets) {
+          $scope.resetDatasetWidgets();
         }
       }
       $scope.preventDefault($event);
@@ -187,6 +246,61 @@ angular.module('frontendApp')
       }
     };
 
+    $scope.resetDatasetWidgets = function() {
+      // install root level widgets per dataset
+      var dataset = $scope.selectedDataset;
+      if (!dataset) return;
+
+      if (dataset.results) {
+        console.log(dataset.results.messystreams)
+        var keys = _.map(dataset.results.messystreams, 'key');
+      }
+
+      dataset.widgets = [
+        {
+          sizeX: 3, sizeY: 2, row: 0, col: 0, type: 'datatypes',
+          title: 'Data types', vizType: 'chart',
+          chartConfig: {
+            // highcharts standard options
+            options: {
+              chart: {
+                  type: 'column'
+              },
+              credits: {enabled: false},
+              tooltip: {
+                headerFormat: '<span style="font-size: 10px">{point.key}</span><br/>',
+                pointFormat: '<span style="font-size: 12px">{series.name}: <b>{point.y}</b></span>'
+              },
+              plotOptions: {
+                column: {
+                  stacking: 'normal'
+                },
+                cursor: 'pointer',
+                series: {
+                  events: {
+                    click: function(event) {
+                      if ($scope.datatypeHasHistogram(this))
+                        $scope.datatypeClicked(dataset.keys[event.point.x], this.name);
+                    }
+                  }
+                }
+              },            
+            },
+            // The below properties are watched separately for changes.
+            title: {text: ''},
+            xAxis: {title: {text: ''}},
+            yAxis: {title: {text: ''}},
+            useHighStocks: false,
+            //size (optional) if left out the chart will default to size of the div or something sensible.
+            // size: {
+            //   width: 400,
+            //   height: 300
+            // },
+          }
+        }
+      ]
+    };
+
     var paginationOptions = {
       pageNumber: 1,
       pageSize: 10,
@@ -194,6 +308,7 @@ angular.module('frontendApp')
     };
 
     var getPage = function() {
+      var deferred = $q.defer();
 
       $scope.loadingData = true;
 
@@ -207,7 +322,10 @@ angular.module('frontendApp')
         $scope.datasetGrid.data = tuples;
         $scope.gridApi.core.notifyDataChange(uiGridConstants.dataChange.ALL);
         $scope.loadingData = false;
+        deferred.resolve();
       });
+
+      return deferred.promise;
     };
 
     $scope.datasetGrid = {
@@ -235,13 +353,6 @@ angular.module('frontendApp')
         });    
       },
     };
-
-    // TODO put all widget definitions here
-    // later define in separate modular files
-    $scope.widgets = [
-      { sizeX: 3, sizeY: 2, row: 0, col: 0, type: 'datatypes', title: 'Data types' },
-      { sizeX: 1, sizeY: 0, row: 1, col: 3 }
-    ];
 
     $scope.gridsterOpts = {
         columns: 6, // the width of the grid, in columns
@@ -282,6 +393,7 @@ angular.module('frontendApp')
       switch(widget.type) {
         case 'data':
         case 'raw':
+        case 'histogram':
           return true;
         case 'datatypes':
           var results = $scope.selectedDataset.results;
@@ -293,7 +405,7 @@ angular.module('frontendApp')
     };
 
     $scope.removeWidget = function(widget, index) {
-      $scope.widgets.splice(index, 1);
+      $scope.selectedDataset.widgets.splice(index, 1);
     };
 
     $scope.preventDefault = function($event) {
@@ -326,6 +438,81 @@ angular.module('frontendApp')
         });
       }
     };
+
+    $scope.datatypeHasHistogram = function(type) {
+      return type.name !== 'null';
+    }
+
+    $scope.datatypeClicked = function(key, type) {
+      // show histogram
+      var dataset = $scope.selectedDataset;
+      if (!dataset) return;
+
+      var widgetTitle = "'" + key + "' as " + type;
+      var widget = {
+        sizeX: 2, sizeY: 2, type: 'histogram',
+        title: widgetTitle,
+        key: key,
+        datatype: type,
+        vizType: 'chart',
+        chartConfig: {
+          // highcharts standard options
+          options: {
+            chart: {
+                type: 'column',
+                zoomType: 'x'
+            },
+            credits: {enabled: false},
+            column: {
+              pointPadding: 0,
+              borderWidth: 0,
+              groupPadding: 0,
+              shadow: false
+            },
+            legend: {enabled: false},
+            tooltip: {
+              headerFormat: '<span style="font-size: 10px">{point.key}</span><br/>',
+              pointFormat: '<span style="font-size: 12px">Count: <b>{point.y}</b></span>'
+            }
+          },
+          // The below properties are watched separately for changes.
+          title: {text: ''},
+          xAxis: {title: {text: ''}},
+          yAxis: {title: {text: ''}},
+          useHighStocks: false,
+          //size (optional) if left out the chart will default to size of the div or something sensible.
+          // size: {
+          //   width: 400,
+          //   height: 300
+          // },
+        }
+      }
+
+      dataset.widgets.push(widget);
+
+      // query from server
+      getHistogram(dataset, key, type)
+      .then(function(histogram){
+        widget.chartConfig.series = [{
+          name: '', grouping: true, // TODO grouping not working?
+          data: _.map(histogram, function(result){
+            return result.count;
+          })
+        }];
+        widget.chartConfig.xAxis.categories = _.map(histogram, function(result){
+          return result.value;
+        });
+      })
+    }
+
+    $scope.widgetTypeClass = function(widget, vizType) {
+      return widget.vizType === vizType ? 'box-content-action-active' : 'box-content-action';
+    }
+
+    $scope.toggleWidgetType = function(widget, vizType) {
+      if (widget.vizType === vizType) return;
+      widget.vizType = vizType;
+    }
 
     /* NOT WORKING! 
     $rootScope.$on('gridster-resized', function(sizes, gridster) {

@@ -22,7 +22,8 @@ angular
     'ngFileUpload',
     'ui.grid',
     'ui.grid.pagination',
-    'ngLodash'
+    'ngLodash',
+    'highcharts-ng'
   ])
   .config(function ($routeProvider) {
     $routeProvider

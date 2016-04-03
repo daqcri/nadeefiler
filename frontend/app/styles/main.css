@@ -129,6 +129,15 @@ a {
 */
 
 /* BEGIN profiler specific styles, should isolate */
+.messystreams-badge {
+  cursor: pointer;
+}
+
+.messystreams-badge-null {
+  color: white;
+  background-color: red;
+}
+
 .messystreams-badge-boolean {
   color: white;
   background-color: green;
@@ -159,9 +168,22 @@ a {
   background-color: gray;
 }
 
-.messystreams-badge-null {
-  color: white;
-  background-color: red;
+.box-content-actions-header {
+  font-size: 12px;
+}
+
+.box-content-actions-label {
+  margin-left: 5px;
+}
+
+.box-content-action {
+  cursor: pointer;
+  color: blue;
+  text-decoration: underline;
+}
+
+.box-content-action-active {
+  font-weight: bold;
 }
 
 /* END profiler specific styles, should isolate */
