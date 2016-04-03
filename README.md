@@ -4,8 +4,8 @@
 
 This is a full-stack Javascript application. You need to install the following:
 
-- [NodeJS](https://nodejs.org/en/) for the web server stack
-- [MongoDB](https://www.mongodb.org/) as the persistence layer
+- [NodeJS 5.x](https://nodejs.org/en/) for the web server stack
+- [MongoDB >= 2.2](https://www.mongodb.org/) as the persistence layer
 - [RabbitMQ](https://www.rabbitmq.com/) for message queueing between web servers and background workers
 
 If you are using [Homebrew](http://brew.sh/) for Mac:
