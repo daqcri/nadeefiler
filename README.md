@@ -1,5 +1,8 @@
 # Interactive Data Profiling Dashboard
 
+## Demo
+A demo is hosted at http://nadeefiler.da.qcridemos.org/.
+
 ## Installation of platform requirements
 
 This is a full-stack Javascript application. You need to install the following:
