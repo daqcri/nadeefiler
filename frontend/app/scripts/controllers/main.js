@@ -396,12 +396,13 @@ angular.module('frontendApp')
         minSizeY: 1, // minumum row height of an item
         maxSizeY: null, // maximum row height of an item
         resizable: {
-           enabled: true,
-           handles: ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw']
+          enabled: true,
+          handles: ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw']
         },
         draggable: {
-           enabled: true, // whether dragging items is supported
-           handle: '.my-class' // optional selector for resize handle
+          enabled: true, // whether dragging items is supported
+          handle: '.my-class', // optional selector for resize handle
+          restrictToClass: 'gridster-allow-drag'  // allow drag only if target element has this class
         }
     };
 

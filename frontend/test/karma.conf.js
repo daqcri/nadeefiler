@@ -28,8 +28,6 @@ module.exports = function(config) {
       'bower_components/angular-sanitize/angular-sanitize.js',
       'bower_components/angular-touch/angular-touch.js',
       'bower_components/angular-ui-grid/ui-grid.js',
-      'bower_components/javascript-detect-element-resize/detect-element-resize.js',
-      'bower_components/angular-gridster/src/angular-gridster.js',
       'bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
       'bower_components/ng-file-upload/ng-file-upload.js',
       'bower_components/ng-file-upload-shim/ng-file-upload-shim.js',
@@ -38,6 +36,8 @@ module.exports = function(config) {
       'bower_components/highcharts/highcharts.js',
       'bower_components/highcharts/highcharts-more.js',
       'bower_components/highcharts/modules/exporting.js',
+      'bower_components/javascript-detect-element-resize/detect-element-resize.js',
+      'bower_components/angular-gridster/src/angular-gridster.js',
       'bower_components/angular-mocks/angular-mocks.js',
       // endbower
       'app/scripts/**/*.js',
