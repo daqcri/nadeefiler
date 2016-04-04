@@ -94,6 +94,16 @@ angular.module('frontendApp')
       socketCommand('/projects/unsubscribe/' + project.id);
     };
 
+    var typesDictionary = {
+      "string": "gray",
+      "date": "lightgreen",
+      "percent": "darkblue",
+      "float": "cyan",
+      "integer": "blue",
+      "boolean": "green",
+      "null": "red"
+    }
+
     var adaptDatasetResults = function(results, dataset) {
       // pivot results over "profiler" key
       var groups = _.groupBy(results, function(result){return result.profiler;});
@@ -113,11 +123,9 @@ angular.module('frontendApp')
         var widgets = _.filter(dataset.widgets, function(w){return w.type === 'datatypes'});
         if (widgets.length > 0) {
           widgets[0].chartConfig.xAxis.categories = keys;
-          var types = ["string", "date", "percent", "float", "integer", "boolean", "null"];
-          var colors = ["gray", "lightgreen", "darkblue", "cyan", "blue", "green", "red"];
-          widgets[0].chartConfig.series = _.map(types, function(type, index){
+          widgets[0].chartConfig.series = _.map(typesDictionary, function(color, type){
             return {
-              name: type, color: colors[index],
+              name: type, color: color,
               data: _.map(keys, function(key){
                 return unsorted[key][0].result[type];
               })
@@ -498,6 +506,7 @@ angular.module('frontendApp')
           data: _.map(histogram, function(result){
             return result.count;
           })
+          color: typesDictionary[type]
         }];
         widget.chartConfig.xAxis.categories = _.map(histogram, function(result){
           return result.value;
