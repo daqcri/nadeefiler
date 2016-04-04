@@ -129,10 +129,6 @@ a {
 */
 
 /* BEGIN profiler specific styles, should isolate */
-.messystreams-badge {
-  cursor: pointer;
-}
-
 .messystreams-badge-null {
   color: white;
   background-color: red;

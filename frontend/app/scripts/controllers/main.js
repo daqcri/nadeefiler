@@ -208,8 +208,12 @@ angular.module('frontendApp')
       }, function(histogram){
         if (!dataset.histograms) dataset.histograms = {};
         if (!dataset.histograms[key]) dataset.histograms[key] = {};
-        dataset.histograms[key][type] = histogram;
-        deferred.resolve(histogram);
+        var sorted = {
+          value: histogram, // already sorted by value
+          count: _.sortBy(histogram, 'count') // sort by count
+        };
+        dataset.histograms[key][type] = sorted;
+        deferred.resolve(sorted);
       });
 
       return deferred.promise;
@@ -260,53 +264,60 @@ angular.module('frontendApp')
       if (!dataset) return;
 
       if (dataset.results) {
-        console.log(dataset.results.messystreams)
+        // console.log(dataset.results.messystreams)
         var keys = _.map(dataset.results.messystreams, 'key');
       }
 
-      dataset.widgets = [
-        {
-          sizeX: 3, sizeY: 2, row: 0, col: 0, type: 'datatypes',
-          title: 'Data types', vizType: 'chart',
-          chartConfig: {
-            // highcharts standard options
-            options: {
-              chart: {
+      if (dataset.widgets) {
+        dataset.widgets = [dataset.widgets[0]];
+        dataset.widgets[0].vizType = 'chart';
+      }
+      else {
+        dataset.widgets = [
+          {
+            sizeX: 3, sizeY: 2, row: 0, col: 0, type: 'datatypes',
+            title: 'Data types', vizType: 'chart',
+            chartConfig: {
+              // highcharts standard options
+              options: {
+                chart: {
                   type: 'column'
-              },
-              credits: {enabled: false},
-              tooltip: {
-                headerFormat: '<span style="font-size: 10px">{point.key}</span><br/>',
-                pointFormat: '<span style="font-size: 12px">{series.name}: <b>{point.y}</b></span>'
-              },
-              plotOptions: {
-                column: {
-                  stacking: 'normal'
                 },
-                cursor: 'pointer',
-                series: {
-                  events: {
-                    click: function(event) {
-                      if ($scope.datatypeHasHistogram(this))
-                        $scope.datatypeClicked(dataset.keys[event.point.x], this.name);
+                credits: {enabled: false},
+                tooltip: {
+                  headerFormat: '<span style="font-size: 10px">{point.key}</span><br/>',
+                  pointFormat: '<span style="font-size: 12px">{series.name}: <b>{point.y}</b></span>'
+                },
+                plotOptions: {
+                  column: {
+                    stacking: 'normal'
+                  },
+                  series: {
+                    cursor: 'pointer',
+                    events: {
+                      click: function(event) {
+                        var result = dataset.results.messystreams[event.point.x];
+                        if ($scope.datatypeHasHistogram(result))
+                          $scope.datatypeClicked(event, result);
+                      }
                     }
                   }
-                }
-              },            
-            },
-            // The below properties are watched separately for changes.
-            title: {text: ''},
-            xAxis: {title: {text: ''}},
-            yAxis: {title: {text: ''}},
-            useHighStocks: false,
-            //size (optional) if left out the chart will default to size of the div or something sensible.
-            // size: {
-            //   width: 400,
-            //   height: 300
-            // },
+                },            
+              },
+              // The below properties are watched separately for changes.
+              title: {text: ''},
+              xAxis: {title: {text: ''}},
+              yAxis: {title: {text: ''}},
+              useHighStocks: false,
+              //size (optional) if left out the chart will default to size of the div or something sensible.
+              // size: {
+              //   width: 400,
+              //   height: 300
+              // },
+            }
           }
-        }
-      ]
+        ];
+      }
     };
 
     var paginationOptions = {
@@ -447,15 +458,11 @@ angular.module('frontendApp')
       }
     };
 
-    $scope.datatypeHasHistogram = function(type) {
-      return type.name !== 'null';
+    $scope.datatypeHasHistogram = function(result) {
+      return result.types.length > 1 || result.types[0].name !== 'null';
     }
 
-    $scope.datatypeClicked = function(key, type) {
-      // show histogram
-      var dataset = $scope.selectedDataset;
-      if (!dataset) return;
-
+    var createHistogramWidget = function(dataset, key, type) {
       var widgetTitle = "'" + key + "' as " + type;
       var widget = {
         sizeX: 2, sizeY: 2, type: 'histogram',
@@ -463,12 +470,18 @@ angular.module('frontendApp')
         key: key,
         datatype: type,
         vizType: 'chart',
+        sort: 'value',
         chartConfig: {
           // highcharts standard options
           options: {
             chart: {
-                type: 'column',
-                zoomType: 'x'
+              type: 'column',
+              zoomType: 'x',
+              panning: true,
+              panKey: 'shift'
+            },
+            subtitle: {
+              text: 'Click and drag to zoom in. Hold down shift key to pan.'
             },
             credits: {enabled: false},
             column: {
@@ -500,27 +513,46 @@ angular.module('frontendApp')
 
       // query from server
       getHistogram(dataset, key, type)
-      .then(function(histogram){
+      .then(function(){
         widget.chartConfig.series = [{
           name: '', grouping: true, // TODO grouping not working?
-          data: _.map(histogram, function(result){
-            return result.count;
-          })
           color: typesDictionary[type]
         }];
-        widget.chartConfig.xAxis.categories = _.map(histogram, function(result){
-          return result.value;
-        });
+        updateSeries(widget);
       })
     }
 
-    $scope.widgetTypeClass = function(widget, vizType) {
-      return widget.vizType === vizType ? 'box-content-action-active' : 'box-content-action';
+    var updateSeries = function(widget) {
+      // console.log("updating histogram with new sort", widget.sort)
+      var histogram = $scope.selectedDataset.histograms[widget.key][widget.datatype][widget.sort];
+      widget.chartConfig.series[0].data = _.map(histogram, 'count');
+      widget.chartConfig.xAxis.categories = _.map(histogram, 'value');
     }
 
-    $scope.toggleWidgetType = function(widget, vizType) {
-      if (widget.vizType === vizType) return;
-      widget.vizType = vizType;
+
+    $scope.datatypeClicked = function(event, result) {
+      // show histograms
+      var dataset = $scope.selectedDataset;
+      if (!dataset) return;
+
+      _.each(result.types, function(type){
+        if (type.name != 'null')
+          createHistogramWidget(dataset, result.key, type.name)
+      })
+
+      $scope.preventDefault(event);
+    }
+
+    $scope.selectedOptionClass = function(currentValue, newValue) {
+      // return widget.vizType === vizType ? 'box-content-action-active' : 'box-content-action';
+      return currentValue === newValue ? 'box-content-action-active' : 'box-content-action';
+    }
+
+    $scope.toggleWidgetOption = function(widget, optionKey, newValue) {
+      if (widget[optionKey] === newValue) return;
+      widget[optionKey] = newValue;
+      if (optionKey === 'sort')
+        updateSeries(widget);
     }
 
     /* NOT WORKING! 

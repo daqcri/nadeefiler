@@ -87,16 +87,17 @@
                     {{selectedDataset.results.messystreams.length}} columns
                     </span>
                     <span class="box-content-actions-label">Show:</span>
-                    <span class="{{widgetTypeClass(widget, 'list')}}" ng-click="toggleWidgetType(widget, 'list')">List</span>
-                    <span class="{{widgetTypeClass(widget, 'chart')}}" ng-click="toggleWidgetType(widget, 'chart')">Chart</span>
+                    <span class="{{selectedOptionClass(widget.vizType, 'list')}}" ng-click="toggleWidgetOption(widget, 'vizType', 'list')">List</span>
+                    <span class="{{selectedOptionClass(widget.vizType, 'chart')}}" ng-click="toggleWidgetOption(widget, 'vizType', 'chart')">Chart</span>
                   </div>
                   
                   <div ng-if="widget.vizType === 'list'" class="list-group">
-                    <a class="list-group-item" ng-repeat="result in selectedDataset.results.messystreams">
-                      <span class="badge {{datatypeHasHistogram(type) ? 'messystreams-badge' : ''}} messystreams-badge-{{type.name}}"
-                      ng-repeat="type in result.types"
-                      ng-click="datatypeHasHistogram(type) ? datatypeClicked(result.key, type.name) : ''"
-                      title="{{datatypeHasHistogram(type) ? 'Show histogram' : ''}}">
+                    <a class="list-group-item" href="#"
+                    ng-repeat="result in selectedDataset.results.messystreams"
+                    title="{{datatypeHasHistogram(result) ? 'Show histogram' : ''}}"
+                    ng-click="datatypeClicked($event, result)">
+                      <span class="badge messystreams-badge-{{type.name}}"
+                      ng-repeat="type in result.types">
                       {{type.name}}{{type.count == selectedDataset.count ? '' : ": " + type.count + " (" + type.percentage + "%)"}}
                       </span>
                       {{result.key}}
@@ -112,16 +113,21 @@
                 <div ng-switch-when="histogram">
                   <div class="box-content-actions-header">
                     <span class="box-content-actions-label">
-                    {{selectedDataset.histograms[widget.key][widget.datatype].length}} values
+                    {{selectedDataset.histograms[widget.key][widget.datatype].value.length}} values
                     </span>
                     <span class="box-content-actions-label">Show:</span>
-                    <span class="{{widgetTypeClass(widget, 'list')}}" ng-click="toggleWidgetType(widget, 'list')">Top 20</span>
-                    <span class="{{widgetTypeClass(widget, 'chart')}}" ng-click="toggleWidgetType(widget, 'chart')">Chart</span>
+                    <span class="{{selectedOptionClass(widget.vizType, 'list')}}" ng-click="toggleWidgetOption(widget, 'vizType', 'list')">Top 20</span>
+                    <span class="{{selectedOptionClass(widget.vizType, 'chart')}}" ng-click="toggleWidgetOption(widget, 'vizType', 'chart')">Chart</span>
+                    <span ng-if="widget.vizType === 'chart'">
+                      <span class="box-content-actions-label">Sort by:</span>
+                      <span class="{{selectedOptionClass(widget.sort, 'count')}}" ng-click="toggleWidgetOption(widget, 'sort', 'count')">Count</span>
+                      <span class="{{selectedOptionClass(widget.sort, 'value')}}" ng-click="toggleWidgetOption(widget, 'sort', 'value')">Value</span>
+                    </span>
                   </div>
                   
                   <div ng-if="widget.vizType === 'list'" class="list-group">
                     <a class="list-group-item"
-                    ng-repeat="result in selectedDataset.histograms[widget.key][widget.datatype] | orderBy:'-count' | limitTo:20 ">
+                    ng-repeat="result in selectedDataset.histograms[widget.key][widget.datatype].count | orderBy:'-count' | limitTo:20 ">
                       <span class="badge">
                       {{result.count}} ({{result.count*100/selectedDataset.count | number:0}}%)
                       </span>
