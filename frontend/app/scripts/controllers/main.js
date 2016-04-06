@@ -104,6 +104,8 @@ angular.module('frontendApp')
       "null": "red"
     }
 
+    var widgetMargin = 10;
+
     var adaptDatasetResults = function(results, dataset) {
       // pivot results over "profiler" key
       var groups = _.groupBy(results, function(result){return result.profiler;});
@@ -258,6 +260,15 @@ angular.module('frontendApp')
       }
     };
 
+    var updateWidgetChartSize = function(widget) {
+      var gridsterElement = angular.element(document.querySelector('div[gridster]'))[0]
+      var widgetColWidth = gridsterElement.offsetWidth / $scope.gridsterOpts.columns;
+      widget.chartConfig.size =  {
+        height: widgetColWidth * widget.sizeY - widgetMargin * 2 - 40 - 18 - 2,
+        width: widgetColWidth * widget.sizeX - widgetMargin * 2 - 2,
+      }
+    }
+
     $scope.resetDatasetWidgets = function() {
       // install root level widgets per dataset
       var dataset = $scope.selectedDataset;
@@ -273,50 +284,45 @@ angular.module('frontendApp')
         dataset.widgets[0].vizType = 'chart';
       }
       else {
-        dataset.widgets = [
-          {
-            sizeX: 3, sizeY: 2, row: 0, col: 0, type: 'datatypes',
-            title: 'Data types', vizType: 'chart',
-            chartConfig: {
-              // highcharts standard options
-              options: {
-                chart: {
-                  type: 'column'
+        var widget = {
+          sizeX: 2, sizeY: 2, row: 0, col: 0, type: 'datatypes',
+          title: 'Data types', vizType: 'chart',
+          chartConfig: {
+            // highcharts standard options
+            options: {
+              chart: {
+                type: 'column'
+              },
+              credits: {enabled: false},
+              tooltip: {
+                headerFormat: '<span style="font-size: 10px">{point.key}</span><br/>',
+                pointFormat: '<span style="font-size: 12px">{series.name}: <b>{point.y}</b></span>'
+              },
+              plotOptions: {
+                column: {
+                  stacking: 'normal'
                 },
-                credits: {enabled: false},
-                tooltip: {
-                  headerFormat: '<span style="font-size: 10px">{point.key}</span><br/>',
-                  pointFormat: '<span style="font-size: 12px">{series.name}: <b>{point.y}</b></span>'
-                },
-                plotOptions: {
-                  column: {
-                    stacking: 'normal'
-                  },
-                  series: {
-                    cursor: 'pointer',
-                    events: {
-                      click: function(event) {
-                        var result = dataset.results.messystreams[event.point.x];
-                        if ($scope.datatypeHasHistogram(result))
-                          $scope.datatypeClicked(event, result);
-                      }
+                series: {
+                  cursor: 'pointer',
+                  events: {
+                    click: function(event) {
+                      var result = dataset.results.messystreams[event.point.x];
+                      if ($scope.datatypeHasHistogram(result))
+                        $scope.datatypeClicked(event, result);
                     }
                   }
-                },            
-              },
-              // The below properties are watched separately for changes.
-              title: {text: ''},
-              xAxis: {title: {text: ''}},
-              yAxis: {title: {text: ''}},
-              useHighStocks: false,
-              //size (optional) if left out the chart will default to size of the div or something sensible.
-              // size: {
-              //   width: 400,
-              //   height: 300
-              // },
-            }
+                }
+              },            
+            },
+            // The below properties are watched separately for changes.
+            title: {text: ''},
+            xAxis: {title: {text: ''}},
+            yAxis: {title: {text: ''}},
+            useHighStocks: false
           }
-        ];
+        }
+        updateWidgetChartSize(widget);
+        dataset.widgets = [widget];
       }
     };
 
@@ -374,14 +380,14 @@ angular.module('frontendApp')
     };
 
     $scope.gridsterOpts = {
-        columns: 6, // the width of the grid, in columns
+        columns: 4, // the width of the grid, in columns
         pushing: true, // whether to push other items out of the way on move or resize
         floating: true, // whether to automatically float items up so they stack (you can temporarily disable if you are adding unsorted items with ng-repeat)
         swapping: true, // whether or not to have items of the same size switch places instead of pushing down if they are the same size
         width: 'auto', // can be an integer or 'auto'. 'auto' scales gridster to be the full width of its containing element
         colWidth: 'auto', // can be an integer or 'auto'.  'auto' uses the pixel width of the element divided by 'columns'
         rowHeight: 'match', // can be an integer or 'match'.  Match uses the colWidth, giving you square widgets.
-        margins: [10, 10], // the pixel distance between each widget
+        margins: [widgetMargin, widgetMargin], // the pixel distance between each widget
         outerMargin: true, // whether margins apply to outer edges of the grid
         isMobile: true, // stacks the grid items if true
         mobileBreakPoint: 600, // if the screen is not wider that this, remove the grid layout and stack the items
@@ -389,7 +395,7 @@ angular.module('frontendApp')
         minColumns: 1, // the minimum columns the grid must have
         minRows: 2, // the minimum height of the grid, in rows
         maxRows: 100,
-        defaultSizeX: 2, // the default width of a gridster item, if not specifed
+        defaultSizeX: 1, // the default width of a gridster item, if not specifed
         defaultSizeY: 1, // the default height of a gridster item, if not specified
         minSizeX: 1, // minimum column width of an item
         maxSizeX: null, // maximum column width of an item
@@ -466,7 +472,7 @@ angular.module('frontendApp')
     var createHistogramWidget = function(dataset, key, type) {
       var widgetTitle = "'" + key + "' as " + type;
       var widget = {
-        sizeX: 2, sizeY: 2, type: 'histogram',
+        sizeX: 2, sizeY: 1, type: 'histogram',
         title: widgetTitle,
         key: key,
         datatype: type,
@@ -501,14 +507,10 @@ angular.module('frontendApp')
           title: {text: ''},
           xAxis: {title: {text: ''}},
           yAxis: {title: {text: ''}},
-          useHighStocks: false,
-          //size (optional) if left out the chart will default to size of the div or something sensible.
-          // size: {
-          //   width: 400,
-          //   height: 300
-          // },
+          useHighStocks: false
         }
       }
+      updateWidgetChartSize(widget);
 
       dataset.widgets.push(widget);
 
@@ -556,41 +558,25 @@ angular.module('frontendApp')
         updateSeries(widget);
     }
 
-    /* NOT WORKING! 
-    $rootScope.$on('gridster-resized', function(sizes, gridster) {
-      console.log('gridster-resized', sizes, gridster);
+    var updateDisplayedWidgetsChartSize = function() {
+      _.each($scope.selectedDataset.widgets, function(widget){
+        updateWidgetChartSize(widget);
+      })
+    }
+
+    $scope.$on('gridster-resized', function(sizes, gridster) {
+      updateDisplayedWidgetsChartSize();
     })
 
-    $rootScope.$on('gridster-item-initialized', function(item) {
-      console.log(item);
+    // $scope.$on('gridster-item-initialized', function(item) {
+    //   console.log(item);
+    // })
+
+    $scope.$on('gridster-item-resized', function(event, item) {
+      // TODO only update the widget corresponding to changed item
+      updateDisplayedWidgetsChartSize();
     })
-
-    $rootScope.$on('gridster-item-resized', function(item) {
-      console.log(item);
-    })
-    */
-
-  //   $scope.$watch('widgets', function(widgets){
-  //     // var dataWidgets = _.filter(widgets, function(widget){
-  //     //   return widget.type == 'data'}
-  //     // );
-
-  //     // TODO CONSIDER MARGIN WIDTHS
-  //     // TODO handle instead in gridster/window resize
-  //     $scope.widgetContentHeightUnit = angular.element(document.querySelector('div[gridster]'))[0].offsetWidth / $scope.gridsterOpts.columns;
-  //     console.log("widgetContentHeightUnit", $scope.widgetContentHeightUnit);
-  // }, true);
-
-  // $scope.widgetContentHeight = function(widget) {
-  //   var newHeight = Math.floor(widget.sizeY * $scope.widgetContentHeightUnit) - 40 - 2;
-  //   if (widget.type == 'data') {
-  //     newHeight -= 26;  // pagination toolbar
-  //   }
-  //   console.log("some widget height", newHeight);
-  //   // $scope.gridApi.core.notifyDataChange(uiGridConstants.dataChange.ALL);
-  //   return newHeight;
-  // }
-
+    
   })
 
   ;

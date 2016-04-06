@@ -75,11 +75,8 @@
                   <a title="Remove widget" ng-click="removeWidget(widget, $index)"><i class="glyphicon glyphicon-trash"></i></a>
                 </div>
               </div>
-              <div class="box-content" ng-switch on="widget.type" style="height: {{widgetContentHeight(widget)}}px;">
+              <div class="box-content" ng-switch on="widget.type">
                 <div ng-switch-when="data">
-                </div>
-                <div ng-switch-when="raw">
-                  data here
                 </div>
                 <div ng-switch-when="datatypes">
                   <div class="box-content-actions-header">

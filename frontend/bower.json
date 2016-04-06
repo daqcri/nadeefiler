@@ -17,7 +17,7 @@
     "ng-lodash": "^0.4.0",
     "highcharts-ng": "^0.0.11",
     "highcharts": "^4.2.3",
-    "angular-gridster": "https://github.com/hammady/angular-gridster.git#master"
+    "angular-gridster": "https://github.com/hammady/angular-gridster.git#broadcast-events"
   },
   "devDependencies": {
     "angular-mocks": "^1.4.0"
