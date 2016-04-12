@@ -64,7 +64,7 @@ var initialScores = {
 };
 
 var scores = {};
-/* scores example: 
+/* scores example:
   {
     key1: {
       integer: score1,
@@ -82,11 +82,15 @@ var scores = {};
   }
 */
 var _resultsCatcher,
+    _dataset,
+    _profilerParams,
     pendingResults;
 
 module.exports = {
-  configure: function(resultsCatcher, options) {
+  configure: function(resultsCatcher, dataset, options) {
     _resultsCatcher = resultsCatcher;
+    _dataset = dataset;
+    _profilerParams = options;
   },
   selector: function(mongoCollection, dataset, keys) {
     // init scores

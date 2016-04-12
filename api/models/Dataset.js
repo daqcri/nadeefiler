@@ -42,12 +42,13 @@ module.exports = {
     Tuple.destroy({dataset: _.pluck(destroyedRecords, 'id')}).exec(cb);
   },
 
-  profile: function(datasets, projectId) {
+  profile: function(datasets, projectId, params) {
     var profileSingle = function(dataset) {
       _.forEach(profilers, function(profiler){
         sails.hooks.amqp.publish({
           type: 'profile',
           profiler: profiler,
+          params: params,
           dataset: _.isObject(dataset) ? dataset.id : dataset
         }, {
           correlationId: projectId

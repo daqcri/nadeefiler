@@ -8,7 +8,7 @@
 var _ = require('lodash');
 
 module.exports = {
-	
+
   create: function(req, res) {
     // raise connection timeout to 10 minutes for large uploads
     req.connection.setTimeout(10 * 60 * 1000);
@@ -95,9 +95,10 @@ module.exports = {
   profile: function(req, res) {
     var datasetId = req.params.id;
     var projectId = req.param('project');
+    var params = JSON.stringify(req.param('project'));
     if (!datasetId) return res.badRequest("Missing trailing /:datasetId ");
     if (!projectId) return res.badRequest("Missing project");
-    Dataset.profile(datasetId, projectId);
+    Dataset.profile(datasetId, projectId, params);
     return res.ok();
   }
 };

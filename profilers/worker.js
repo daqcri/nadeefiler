@@ -86,7 +86,7 @@
 
             db.collection('result').deleteMany(filter)
             .then(function(){
-              pipeTuples(task.dataset, profilers[task.profiler], resultsCatcher)
+              pipeTuples(task.dataset, profilers[task.profiler], JSON.parse(task.params), resultsCatcher)
             })
           }
         });
@@ -102,7 +102,7 @@
       {correlationId: task.correlationId});
   }
 
-  function pipeTuples(dataset, profiler, resultsCatcher) {
+  function pipeTuples(dataset, profiler, profilerParams, resultsCatcher) {
     // create mongo query
     var query = {dataset: dataset},
         projection = {_id: 0, createdAt: 0, updatedAt: 0, dataset: 0};
@@ -124,7 +124,7 @@
         // default data selector: return all tuples
         return collection.find(query).project(projection)
         .stream({
-          transform: function(tuple) { 
+          transform: function(tuple) {
             // return columns in the same order for each tuple
             return _.map(keys, function(key){return tuple[key]});
           }
@@ -134,7 +134,7 @@
 
     // configure profile first
     if (_.isFunction(profiler.configure)) {
-      profiler.configure(resultsCatcher);
+      profiler.configure(resultsCatcher, dataset, profilerParams);
     }
 
     // extract header from first tuple
