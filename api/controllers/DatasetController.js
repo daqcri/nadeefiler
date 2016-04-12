@@ -18,6 +18,7 @@ module.exports = {
         totalRows = {},
         finishedPromises = [],
         projectId = req.param('projectId');
+        params = req.param('params');
 
     req.file('files').upload({
       adapter: require('skipper-csv'),
@@ -69,7 +70,7 @@ module.exports = {
         })
         return Promise.all(updatePromises).then(function(datasets){
           // profile datasets in background
-          Dataset.profile(datasets, projectId);
+          Dataset.profile(datasets, projectId, params);
           // return client response
           return res.json({
             message: "Uploaded " + files.length + " CSV file(s)!",

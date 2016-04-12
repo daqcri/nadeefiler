@@ -253,10 +253,10 @@ angular.module('frontendApp')
         });
       }
     };
-
+    $scope.profilerParams = {};
     $scope.profileDataset = function() {
       if ($scope.selectedDataset) {
-        Dataset.profile({}, $scope.selectedDataset);
+        Dataset.profile({params: $scope.profilerParams}, $scope.selectedDataset);
       }
     };
 
@@ -312,7 +312,7 @@ angular.module('frontendApp')
                     }
                   }
                 }
-              },            
+              },
             },
             // The below properties are watched separately for changes.
             title: {text: ''},
@@ -375,7 +375,7 @@ angular.module('frontendApp')
           paginationOptions.pageNumber = newPage;
           paginationOptions.pageSize = pageSize;
           getPage();
-        });    
+        });
       },
     };
 
@@ -451,7 +451,7 @@ angular.module('frontendApp')
       if (files && files.length) {
         Upload.upload({
           url: ENV.API_BASE_URL + '/datasets',
-          data: {projectId: $scope.selectedProject.id, files: files},
+          data: {projectId: $scope.selectedProject.id, files: files, params: $scope.profilerParams},
           arrayKey: ''
         }).then(function (response) {
           $scope.alerts.push({type: 'success', message: response.data.message});
@@ -459,7 +459,7 @@ angular.module('frontendApp')
         }, function (response) {
           $scope.alerts.push({type: 'danger', message: 'Error uploading files (' + response.status + ')'});
         }, function (evt) {
-          $scope.uploadProgress = 
+          $scope.uploadProgress =
             Math.min(100, parseInt(100.0 * evt.loaded / evt.total));
         });
       }
@@ -576,7 +576,7 @@ angular.module('frontendApp')
       // TODO only update the widget corresponding to changed item
       updateDisplayedWidgetsChartSize();
     })
-    
+
   })
 
   ;
