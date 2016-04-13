@@ -253,7 +253,17 @@ angular.module('frontendApp')
         });
       }
     };
-    $scope.profilerParams = {};
+    $scope.profilerParams = JSON.stringify({
+                 "histogram": ["0.6", "0.05"],
+                 "discretestats": ["8", "2"],
+                 "verbosity": 1,
+                 "disabled_rules": ["unix2date", "bits"]
+              });
+    $scope.outliersProfilerSelected = false;
+    $scope.outliersDetection = function(){
+        $scope.outliersProfilerSelected = true;
+        $scope.profileDataset();
+    };
     $scope.profileDataset = function() {
       if ($scope.selectedDataset) {
         Dataset.profile({params: $scope.profilerParams}, $scope.selectedDataset);
