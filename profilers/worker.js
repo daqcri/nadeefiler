@@ -134,9 +134,11 @@
 
     // configure profile first
     if (_.isFunction(profiler.configure)) {
+      console.log('maranach nbanou');
       profiler.configure(resultsCatcher, dataset, profilerParams);
+      console.log('wla kifach');
     }
-
+    console.log('just before tuple somehing');
     // extract header from first tuple
     db.collection('tuple').find(query, {limit: 1}).project(projection).next()
     .then(function(tuple){
@@ -150,7 +152,6 @@
         var csvStringify = csvStringifier({header: true, columns: keys})
         tmp.tmpNameAsync()
         .then(function(filename){
-          console.log("Generated temporary filename at: " + filename);
           var write = fs.createWriteStream(filename);
           write.on('finish', function(){
             profiler.onFile(filename)

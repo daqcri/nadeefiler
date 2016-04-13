@@ -96,7 +96,7 @@ module.exports = {
   profile: function(req, res) {
     var datasetId = req.params.id;
     var projectId = req.param('project');
-    var params = JSON.stringify(req.param('project'));
+    var params = req.param('params');
     if (!datasetId) return res.badRequest("Missing trailing /:datasetId ");
     if (!projectId) return res.badRequest("Missing project");
     Dataset.profile(datasetId, projectId, params);
