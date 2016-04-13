@@ -110,6 +110,37 @@
 
                 </div>
 
+                <div ng-switch-when="outliers">
+                  <div class="box-content-actions-header">
+                    <span class="box-content-actions-label">
+                    {{selectedDataset.results.outliers.length}} outliers
+                    </span>
+                  </div>
+                  <div ng-if="widget.vizType === 'list'" class="list-group">
+                    <a class="list-group-item" href="#"
+                    ng-repeat="result in selectedDataset.results.outliers"
+                    ng-click="outlierClicked($event, result)">
+                      {{result.outlier}}
+                    </a>
+                  </div>
+                </div>
+
+                <div ng-switch-when="outlier">
+                  <div class="box-content-actions-header">
+                    <span class="box-content-actions-label">
+                    {{selectedOutlier.fields.length}} features
+                    </span>
+                  </div>
+
+                  <div ng-if="widget.vizType === 'list'" class="list-group">
+                    <span class="list-group-item"
+                    ng-repeat="feature in selectedOutlier.fields">
+
+                      {{feature.msg}}
+                    </span>
+                  </div>
+                </div>
+
                 <div ng-switch-when="histogram">
                   <div class="box-content-actions-header">
                     <span class="box-content-actions-label">

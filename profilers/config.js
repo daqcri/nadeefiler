@@ -1,6 +1,6 @@
 module.exports = [
   // "messytables",
   // "fdminer",
-  // "messystreams",
+  "messystreams",
   "outliers"
 ];
