@@ -3,11 +3,15 @@ var Promise = require("bluebird");
 
 // TODO catch js errors in this file
 
-var _resultsCatcher;
+var _resultsCatcher,
+    _dataset,
+    _profilerParams;
 
 module.exports = {
-  configure: function(resultsCatcher, options) {
+  configure: function(resultsCatcher, dataset, options) {
     _resultsCatcher = resultsCatcher;
+    _dataset = dataset;
+    _profilerParams = options;
   },
   selector: function(mongoCollection, dataset, keys) {
     // TODO: this is a test selector that just limits results by 3

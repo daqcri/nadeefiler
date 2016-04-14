@@ -12,11 +12,15 @@ var parseRawResults = function(rawResults) {
   });
 }
 
-var _resultsCatcher;
+var _resultsCatcher,
+    _dataset,
+    _profilerParams;
 
 module.exports = {
-  configure: function(resultsCatcher, options) {
+  configure: function(resultsCatcher, dataset, options) {
     _resultsCatcher = resultsCatcher;
+    _dataset = dataset;
+    _profilerParams = options;
   },
   onFile: function(csv) {
     var file = __dirname + '/run.py',

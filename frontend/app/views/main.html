@@ -54,14 +54,17 @@
           </div>
           <div class="btn btn-danger" role="group" ng-show="selectedDataset" ng-click="deleteDataset()">Delete</div>
           <div class="btn btn-default" role="group" ng-show="selectedDataset" ng-click="profileDataset()">Profile</div>
+          <div class="btn btn-default" role="group" ng-show="selectedDataset" ng-click="outliersDetection()">Outliers Detection</div>
           <div class="btn btn-default" role="group" ng-show="selectedDataset" ng-click="resetDatasetWidgets()">Reset widgets</div>
         </div>
       </div>
-
     </div>
 
     <div class="col-md-10">
-
+      <div ng-show="selectedProject">
+          <h3>Outliers Profiler Params</h3>
+          <textarea  ng-model="profilerParams" rows="4" cols="100"></textarea>
+      </div>
       <div ui-grid="datasetGrid" __ui-grid-auto-resize ui-grid-pagination class="datasetGrid" ng-if="selectedDataset"></div>
       <div ng-show="loadingData">Loading...</div>
 
@@ -87,7 +90,7 @@
                     <span class="{{selectedOptionClass(widget.vizType, 'list')}}" ng-click="toggleWidgetOption(widget, 'vizType', 'list')">List</span>
                     <span class="{{selectedOptionClass(widget.vizType, 'chart')}}" ng-click="toggleWidgetOption(widget, 'vizType', 'chart')">Chart</span>
                   </div>
-                  
+
                   <div ng-if="widget.vizType === 'list'" class="list-group">
                     <a class="list-group-item" href="#"
                     ng-repeat="result in selectedDataset.results.messystreams"
@@ -107,6 +110,37 @@
 
                 </div>
 
+                <div ng-switch-when="outliers">
+                  <div class="box-content-actions-header">
+                    <span class="box-content-actions-label">
+                    {{selectedDataset.results.outliers.length}} outliers
+                    </span>
+                  </div>
+                  <div ng-if="widget.vizType === 'list'" class="list-group">
+                    <a class="list-group-item" href="#"
+                    ng-repeat="result in selectedDataset.results.outliers"
+                    ng-click="outlierClicked($event, result)">
+                      {{result.outlier}}
+                    </a>
+                  </div>
+                </div>
+
+                <div ng-switch-when="outlier">
+                  <div class="box-content-actions-header">
+                    <span class="box-content-actions-label">
+                    {{selectedOutlier.fields.length}} features
+                    </span>
+                  </div>
+
+                  <div ng-if="widget.vizType === 'list'" class="list-group">
+                    <span class="list-group-item"
+                    ng-repeat="feature in selectedOutlier.fields">
+
+                      {{feature.msg}}
+                    </span>
+                  </div>
+                </div>
+
                 <div ng-switch-when="histogram">
                   <div class="box-content-actions-header">
                     <span class="box-content-actions-label">
@@ -121,7 +155,7 @@
                       <span class="{{selectedOptionClass(widget.sort, 'value')}}" ng-click="toggleWidgetOption(widget, 'sort', 'value')">Value</span>
                     </span>
                   </div>
-                  
+
                   <div ng-if="widget.vizType === 'list'" class="list-group">
                     <a class="list-group-item"
                     ng-repeat="result in selectedDataset.histograms[widget.key][widget.datatype].count | orderBy:'-count' | limitTo:20 ">

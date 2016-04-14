@@ -122,7 +122,7 @@ angular.module('frontendApp')
         groups.messystreams = _.map(keys, function(key){return unsorted[key][0];})
 
         // setup widget chart
-        var widgets = _.filter(dataset.widgets, function(w){return w.type === 'datatypes'});
+        var widgets = _.filter(dataset.widgets, function(w){return (w.type === 'datatypes' || w.type === 'outliers')});
         if (widgets.length > 0) {
           widgets[0].chartConfig.xAxis.categories = keys;
           widgets[0].chartConfig.series = _.map(typesDictionary, function(color, type){
@@ -253,10 +253,27 @@ angular.module('frontendApp')
         });
       }
     };
-
+    $scope.profilerParams = JSON.stringify({
+                 "histogram": ["0.6", "0.05"],
+                 "discretestats": ["8", "2"],
+                 "verbosity": 1,
+                 "disabled_rules": ["unix2date", "bits"]
+              });
+    $scope.outliersProfilerSelected = false;
+    $scope.outliersDetection = function(){
+        $scope.outliersProfilerSelected = true;
+        $scope.createOutliersWidget();
+    };
+    $scope.outlierClicked = function (event, result) {
+      var dataset = $scope.selectedDataset;
+      if (!dataset) return;
+      $scope.selectedOutlier = result;
+      $scope.createOutlierFeatureWidget(dataset, result.outlier, result.fields);
+      $scope.preventDefault(event);
+    }
     $scope.profileDataset = function() {
       if ($scope.selectedDataset) {
-        Dataset.profile({}, $scope.selectedDataset);
+        Dataset.profile({params: $scope.profilerParams}, $scope.selectedDataset);
       }
     };
 
@@ -268,7 +285,43 @@ angular.module('frontendApp')
         width: widgetColWidth * widget.sizeX - widgetMargin * 2 - 2,
       }
     }
+    $scope.createOutliersWidget = function(){
+        var dataset = $scope.selectedDataset;
+        if (!dataset) return;
+        var widget = {
+            sizeX: 2, sizeY: 2, row: 0, col: 0, type: 'outliers',
+            title: 'Outliers', vizType: 'list',
+            chartConfig: {
+              // The below properties are watched separately for changes.
+              title: {text: ''},
+              xAxis: {title: {text: ''}},
+              yAxis: {title: {text: ''}},
+              useHighStocks: false
+            }
+        };
+        updateWidgetChartSize(widget);
+        dataset.widgets = [widget];
+    };
 
+    $scope.createOutlierFeatureWidget = function(dataset, outlier, fields) {
+        var widgetTitle = "Features about " + outlier;
+        var widget = {
+          sizeX: 2, sizeY: 1, type: 'outlier',
+          title: widgetTitle,
+          vizType: 'list',
+          chartConfig: {
+                title: {text: ''},
+                xAxis: {title: {text: ''}},
+                yAxis: {title: {text: ''}},
+                useHighStocks: false
+              }
+        };
+        updateWidgetChartSize(widget);
+        if (dataset.widgets.length > 1){
+            dataset.widgets.pop();
+        }
+        dataset.widgets.push(widget);
+    }
     $scope.resetDatasetWidgets = function() {
       // install root level widgets per dataset
       var dataset = $scope.selectedDataset;
@@ -312,7 +365,7 @@ angular.module('frontendApp')
                     }
                   }
                 }
-              },            
+              },
             },
             // The below properties are watched separately for changes.
             title: {text: ''},
@@ -375,7 +428,7 @@ angular.module('frontendApp')
           paginationOptions.pageNumber = newPage;
           paginationOptions.pageSize = pageSize;
           getPage();
-        });    
+        });
       },
     };
 
@@ -424,6 +477,11 @@ angular.module('frontendApp')
         case 'datatypes':
           var results = $scope.selectedDataset.results;
           return results && results.messystreams;
+        case 'outliers':
+          var results = $scope.selectedDataset.results;
+          return results && results.outliers;
+        case 'outlier':
+          return true;
         default:
           return false;
           // TODO: toggle widget based on its type/status
@@ -451,7 +509,7 @@ angular.module('frontendApp')
       if (files && files.length) {
         Upload.upload({
           url: ENV.API_BASE_URL + '/datasets',
-          data: {projectId: $scope.selectedProject.id, files: files},
+          data: {projectId: $scope.selectedProject.id, files: files, params: $scope.profilerParams},
           arrayKey: ''
         }).then(function (response) {
           $scope.alerts.push({type: 'success', message: response.data.message});
@@ -459,7 +517,7 @@ angular.module('frontendApp')
         }, function (response) {
           $scope.alerts.push({type: 'danger', message: 'Error uploading files (' + response.status + ')'});
         }, function (evt) {
-          $scope.uploadProgress = 
+          $scope.uploadProgress =
             Math.min(100, parseInt(100.0 * evt.loaded / evt.total));
         });
       }
@@ -523,7 +581,8 @@ angular.module('frontendApp')
         }];
         updateSeries(widget);
       })
-    }
+    };
+
 
     var updateSeries = function(widget) {
       // console.log("updating histogram with new sort", widget.sort)
@@ -576,7 +635,7 @@ angular.module('frontendApp')
       // TODO only update the widget corresponding to changed item
       updateDisplayedWidgetsChartSize();
     })
-    
+
   })
 
   ;
