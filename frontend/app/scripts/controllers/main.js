@@ -254,6 +254,118 @@ angular.module('frontendApp')
       }
     };
 
+    $scope.outliersProfilerSelected = false;
+
+    $scope.outliersDetection = function(){
+        $scope.outliersProfilerSelected = true;
+        $scope.createOutliersWidget();
+    };
+
+    $scope.createOutliersWidget = function(){
+        var dataset = $scope.selectedDataset;
+        if (!dataset) return;
+        var widget = {
+            sizeX: 2, sizeY: 2, row: 0, col: 0, type: 'outliers',
+            title: 'Outliers', vizType: 'list',
+            chartConfig: {
+              // The below properties are watched separately for changes.
+              title: {text: ''},
+              xAxis: {title: {text: ''}},
+              yAxis: {title: {text: ''}},
+              useHighStocks: false
+            }
+        };
+        updateWidgetChartSize(widget);
+        dataset.widgets = [widget];
+    };
+
+    $scope.outlierClicked = function (event, result) {
+      var dataset = $scope.selectedDataset;
+      if (!dataset) return;
+      $scope.selectedOutlier = result;
+      $scope.createOutlierFeatureWidget(dataset, result.outlier, result.fields);
+      $scope.preventDefault(event);
+    };
+
+    $scope.createOutlierFeatureWidget = function(dataset, outlier, fields) {
+        var widgetTitle = "Features related to " + outlier;
+        var widget = {
+          sizeX: 2, sizeY: 1, type: 'outlier',
+          title: widgetTitle,
+          vizType: 'list',
+          chartConfig: {
+                title: {text: ''},
+                xAxis: {title: {text: ''}},
+                yAxis: {title: {text: ''}},
+                useHighStocks: false
+              }
+        };
+        updateWidgetChartSize(widget);
+        if (dataset.widgets.length > 1){
+            dataset.widgets.pop();
+        }
+        dataset.widgets.push(widget);
+    };
+
+    $scope.outlierFeatureClicked = function (event, result) {
+        var dataset = $scope.selectedDataset;
+        if (!dataset) return;
+        $scope.createOutlierHistogramWidget(dataset, result);
+        $scope.preventDefault(event);
+    };
+
+    $scope.createOutlierHistogramWidget = function(dataset, feature) {
+        var widgetTitle =  feature.msg;
+        var widget = {
+            sizeX: 2, sizeY: 1, type: 'outlierHistogram',
+            title: widgetTitle,
+            chartConfig: {
+                options: {
+                    chart: {
+                      type: 'column'
+                    },
+                    credits: {enabled: false},
+                    tooltip: {
+                      headerFormat: '<span style="font-size: 10px">{point.key}</span><br/>',
+                      pointFormat: '<span style="font-size: 12px">{series.name}: <b>{point.y}</b></span>'
+                    },
+                    plotOptions: {
+                      column: {
+                        stacking: 'normal'
+                      },
+                      series: {
+                        cursor: 'pointer',
+                        events: {
+                          click: function(event) {
+                            var result = dataset.results.messystreams[event.point.x];
+                            if ($scope.datatypeHasHistogram(result))
+                              $scope.datatypeClicked(event, result);
+                          }
+                        }
+                      }
+                    }
+                },
+                title: {text: ''},
+                xAxis: {title: {text: ''}},
+                yAxis: {title: {text: ''}},
+                useHighStocks: false,
+                series: [{
+                  value: '',
+                  key: ''
+                }]
+              }
+        };
+        widget.chartConfig.series[0].data = _.map(feature.graph, 'value');
+        widget.chartConfig.xAxis.categories = _.map(feature.graph, 'key');
+
+        updateWidgetChartSize(widget);
+        if (dataset.widgets.length > 2){
+            dataset.widgets.pop();
+        }
+        dataset.widgets.push(widget);
+    };
+
+
     $scope.profileDataset = function() {
       if ($scope.selectedDataset) {
         Dataset.profile({}, $scope.selectedDataset);
@@ -312,7 +424,7 @@ angular.module('frontendApp')
                     }
                   }
                 }
-              },            
+              },
             },
             // The below properties are watched separately for changes.
             title: {text: ''},
@@ -375,7 +487,7 @@ angular.module('frontendApp')
           paginationOptions.pageNumber = newPage;
           paginationOptions.pageSize = pageSize;
           getPage();
-        });    
+        });
       },
     };
 
@@ -424,6 +536,13 @@ angular.module('frontendApp')
         case 'datatypes':
           var results = $scope.selectedDataset.results;
           return results && results.messystreams;
+        case 'outliers':
+          var results = $scope.selectedDataset.results;
+          return results && results.outliers;
+        case 'outlier':
+          return true;
+        case 'outlierHistogram':
+          return true;
         default:
           return false;
           // TODO: toggle widget based on its type/status
@@ -459,7 +578,7 @@ angular.module('frontendApp')
         }, function (response) {
           $scope.alerts.push({type: 'danger', message: 'Error uploading files (' + response.status + ')'});
         }, function (evt) {
-          $scope.uploadProgress = 
+          $scope.uploadProgress =
             Math.min(100, parseInt(100.0 * evt.loaded / evt.total));
         });
       }
@@ -576,7 +695,7 @@ angular.module('frontendApp')
       // TODO only update the widget corresponding to changed item
       updateDisplayedWidgetsChartSize();
     })
-    
+
   })
 
   ;
