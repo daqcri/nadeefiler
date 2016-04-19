@@ -87,7 +87,7 @@
                     <span class="{{selectedOptionClass(widget.vizType, 'list')}}" ng-click="toggleWidgetOption(widget, 'vizType', 'list')">List</span>
                     <span class="{{selectedOptionClass(widget.vizType, 'chart')}}" ng-click="toggleWidgetOption(widget, 'vizType', 'chart')">Chart</span>
                   </div>
-                  
+
                   <div ng-if="widget.vizType === 'list'" class="list-group">
                     <a class="list-group-item" href="#"
                     ng-repeat="result in selectedDataset.results.messystreams"
@@ -121,7 +121,7 @@
                       <span class="{{selectedOptionClass(widget.sort, 'value')}}" ng-click="toggleWidgetOption(widget, 'sort', 'value')">Value</span>
                     </span>
                   </div>
-                  
+
                   <div ng-if="widget.vizType === 'list'" class="list-group">
                     <a class="list-group-item"
                     ng-repeat="result in selectedDataset.histograms[widget.key][widget.datatype].count | orderBy:'-count' | limitTo:20 ">
@@ -137,6 +137,47 @@
                   </div>
 
                 </div>
+
+                <div ng-switch-when="outliers">
+                  <div class="box-content-actions-header">
+                    <span class="box-content-actions-label">
+                    {{selectedDataset.results.outliers.length}} outliers
+                    </span>
+                  </div>
+                  <div ng-if="widget.vizType === 'list'" class="list-group">
+                    <a class="list-group-item" href="#"
+                    ng-repeat="result in selectedDataset.results.outliers"
+                    ng-click="outlierClicked($event, result)">
+                      {{result.outlier}}
+                    </a>
+                  </div>
+                </div>
+
+                <div ng-switch-when="outlier">
+                  <div class="box-content-actions-header">
+                    <span class="box-content-actions-label">
+                    {{selectedOutlier.fields.length}} features
+                    </span>
+                  </div>
+
+                  <div ng-if="widget.vizType === 'list'" class="list-group">
+                    <span class="list-group-item"
+                    ng-repeat="feature in selectedOutlier.fields">
+                        <div class="list-group">
+                          <a class="list-group-item" href="#"
+                          ng-click="outlierFeatureClicked($event, feature)">
+                            {{feature.msg}}
+                          </a>
+                        </div>
+                      </span>
+                    </div>
+                </div>
+
+                <div ng-switch-when="outlierHistogram">
+                    <highchart id="chart_{{selectedDataset.id}}_outliersHisto" config="widget.chartConfig"></highchart>
+                </div>
+
+
               </div>
             </div>
           </li>
