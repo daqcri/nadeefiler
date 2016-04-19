@@ -13,7 +13,7 @@ module.exports = {
     _profilerParams = options;
   },
   onFile: function(csv) {
-    var cmd = './dBoost/dboost/dboost-stdin.py',
+    var cmd = './dBoost/dboost/dboost-json-stdin.py',
     args = ['--histogram', '0.8',  '0.05' ,'--discretestats', '8', '2' , '--field-separator', ',', '-vv', csv];
     options = {cwd: __dirname};
     return new Promise(function(resolve, reject){
