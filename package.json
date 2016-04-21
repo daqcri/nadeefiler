@@ -33,7 +33,9 @@
   "scripts": {
     "debug": "node debug app.js",
     "start": "node app.js",
-    "postinstall": "git submodule init && git submodule update && cd profilers && npm install && cd ../frontend && npm install && node_modules/bower/bin/bower install && grunt build"
+    "postinstall": "git submodule init && git submodule update && cd profilers && npm install && cd ../frontend && npm install && node_modules/bower/bin/bower install && grunt build",
+    "livereload": "cd frontend && grunt serve",
+    "profilers": "cd profilers && npm start"
   },
   "main": "app.js",
   "repository": {
