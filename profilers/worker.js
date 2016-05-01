@@ -186,8 +186,16 @@
   function loadProfilers(config) {
     // load and validate profilers
     var errors = 0;
-    var profilers = _.reduce(config, function(profilers, profilerName) {
-      var profiler = require("./" + profilerName);
+    var profilers = _.reduce(config, function(profilers, profilerSpec) {
+      var profiler, profilerName;
+      if (_.isString(profilerSpec)) {
+        profilerName = profilerSpec;
+      }
+      else {
+        profilerName = profilerSpec.module;
+        profilers = _.merge(profilers, loadProfilers(profilerSpec.cascade));
+      }
+      profiler = require("./" + profilerName);
       if (!_.isFunction(profiler.onFinish)) {
         console.error("Profiler '%s' must contain onFinish function that returns profiling results", profilerName);
         errors++;
@@ -214,7 +222,7 @@
   var amqpConnection, amqpChannel, db;
   var stream = require('stream');
   var profilers = loadProfilers(require('./config'));
-  console.log(profilers);
+  console.log(JSON.stringify(profilers));
 
   connectMongo(urlMongo)
   .then(function(mongoDb){

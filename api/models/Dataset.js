@@ -44,15 +44,7 @@ module.exports = {
 
   profile: function(datasets, projectId) {
     var profileSingle = function(dataset) {
-      _.forEach(profilers, function(profiler){
-        sails.hooks.amqp.publish({
-          type: 'profile',
-          profiler: profiler,
-          dataset: _.isObject(dataset) ? dataset.id : dataset
-        }, {
-          correlationId: projectId
-        });
-      });
+      sails.hooks.amqp.publishProfilerTasks(dataset, projectId, profilers);
     }
 
     // initiate profiler workers

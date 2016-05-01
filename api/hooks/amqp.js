@@ -2,7 +2,7 @@ module.exports = function amqp(sails) {
 
   var channel, replyToQueue;
 
-  return {
+  var ret = {
     defaults: {
       amqp: {
         url: "amqp://localhost",
@@ -33,7 +33,13 @@ module.exports = function amqp(sails) {
               console.log("Received reply from worker: " + msg.content);
               // send back to client through socket
               // TODO this should move out to the caller of the publish
-              sails.sockets.broadcast(msg.properties.correlationId, "profilerResults", JSON.parse(msg.content.toString()));
+              var task = JSON.parse(msg.content.toString());
+              sails.sockets.broadcast(msg.properties.correlationId, "profilerResults", task);
+              // cascade more profilers, if any
+              // TODO move cascadedProfilers to caller of publish
+              if (_.isArray(task.cascadedProfilers)) {
+                ret.publishProfilerTasks(task.dataset, msg.properties.correlationId, task.cascadedProfilers);
+              }
             }, {noAck: true});
             cb();
           }, function(err){
@@ -56,6 +62,22 @@ module.exports = function amqp(sails) {
       }
       var q = sails.config.amqp.queue;
       channel.sendToQueue(q, new Buffer(msg), _.merge(msgOptions, options));
+    },
+
+    publishProfilerTasks: function(dataset, projectId, profilers) {
+      _.forEach(profilers, function(profiler){
+        ret.publish({
+          type: 'profile',
+          profiler: _.isString(profiler) ? profiler : profiler.module,
+          cascadedProfilers: _.isString(profiler) ? null : profiler.cascade,
+          dataset: _.isObject(dataset) ? dataset.id : dataset
+        }, {
+          correlationId: projectId
+        });
+      });
     }
+
   };
+
+  return ret;
 }
