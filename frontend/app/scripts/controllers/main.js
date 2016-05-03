@@ -275,8 +275,9 @@ angular.module('frontendApp')
     $scope.outlierClicked = function (event, result) {
       var dataset = $scope.selectedDataset;
       if (!dataset) return;
-      $scope.selectedOutlier = result;
-      $scope.createOutlierFeatureWidget(dataset, result.outlier, result.fields);
+      _.each(result.fields, function(field){
+          $scope.createOutlierHistogramWidget(dataset, field);
+      });
       $scope.preventDefault(event);
     };
 
@@ -296,14 +297,6 @@ angular.module('frontendApp')
         updateWidgetChartSize(widget);
         dataset.widgets.push(widget);
     };
-
-    $scope.outlierFeatureClicked = function (event, result) {
-        var dataset = $scope.selectedDataset;
-        if (!dataset) return;
-        $scope.createOutlierHistogramWidget(dataset, result);
-        $scope.preventDefault(event);
-    };
-
     $scope.createOutlierHistogramWidget = function(dataset, feature) {
         var widgetTitle =  feature.msg;
         var widget = {
@@ -324,6 +317,7 @@ angular.module('frontendApp')
                         stacking: 'normal'
                       },
                       series: {
+                        name: 'Count',
                         cursor: 'pointer',
                         events: {
                           click: function(event) {
@@ -527,8 +521,6 @@ angular.module('frontendApp')
         case 'outliers':
           var results = $scope.selectedDataset.results;
           return results && results.outliers;
-        case 'outlier':
-          return true;
         case 'outlierHistogram':
           return true;
         default:

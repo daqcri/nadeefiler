@@ -152,27 +152,6 @@
                     </a>
                   </div>
                 </div>
-
-                <div ng-switch-when="outlier">
-                  <div class="box-content-actions-header">
-                    <span class="box-content-actions-label">
-                    {{selectedOutlier.fields.length}} features
-                    </span>
-                  </div>
-
-                  <div ng-if="widget.vizType === 'list'" class="list-group">
-                    <span class="list-group-item"
-                    ng-repeat="feature in selectedOutlier.fields">
-                        <div class="list-group">
-                          <a class="list-group-item" href="#"
-                          ng-click="outlierFeatureClicked($event, feature)">
-                            {{feature.msg}}
-                          </a>
-                        </div>
-                      </span>
-                    </div>
-                </div>
-
                 <div ng-switch-when="outlierHistogram">
                     <highchart id="chart_{{selectedDataset.id}}_outliersHisto" config="widget.chartConfig"></highchart>
                 </div>
