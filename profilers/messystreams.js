@@ -63,7 +63,7 @@ var initialScores = {
   null: 0
 };
 
-var scores = {};
+var scores;
 /* scores example: 
   {
     key1: {
@@ -88,8 +88,9 @@ module.exports = {
   configure: function(resultsCatcher, options) {
     _resultsCatcher = resultsCatcher;
   },
-  selector: function(mongoCollection, dataset, keys) {
+  selector: function(db, dataset, keys) {
     // init scores
+    scores = {}
     _.forEach(keys, function(key){
       scores[key] = _.clone(initialScores);
     });
@@ -101,7 +102,7 @@ module.exports = {
         {$match: {"dataset": dataset}},
         {$group: {"_id": "$" + key, "count": {$sum: 1}}}
       ];
-      return _.set(hash, key, mongoCollection.aggregate(pipeline));
+      return _.set(hash, key, db.collection('tuple').aggregate(pipeline));
     }, {});
   },
   onValue: function(key, value) {

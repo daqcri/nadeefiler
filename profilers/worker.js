@@ -112,7 +112,7 @@
       var collection = db.collection('tuple');
       if (profiler.selector) {
         // custom data selector
-        return profiler.selector(collection, dataset, keys);
+        return profiler.selector(db, dataset, keys);
       }
       else if (profiler.onValue) {
         // default data selector: return all values

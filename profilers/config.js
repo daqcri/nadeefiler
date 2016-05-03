@@ -13,7 +13,7 @@ module.exports = [
   {
     module: "messystreams",
     cascade: [
-      "fdminer"
+      "semantic"
     ]
   },
   "outliers"
