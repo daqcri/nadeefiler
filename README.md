@@ -59,7 +59,8 @@ downloaded from [here](http://qcridatasets.s3-website-us-west-1.amazonaws.com/ya
     # decompress
     gunzip yagoSimpleTypes-nadeefiler.tsv.gz
     # import (honors MONGOLAB_URI environment variable)
-    ./import-yago.js < yagoSimpleTypes-nadeefiler.tsv
+    # allocate as much memory as possible, here we allocate 20000 MB
+    node --max-old-space-size=20000 import-yago.js < yagoSimpleTypes-nadeefiler.tsv
     # create the text index from mongo shell
     mongo $MONGOLAB_URI
     # from the shell prompt:
