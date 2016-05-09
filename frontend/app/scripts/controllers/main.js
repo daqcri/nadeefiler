@@ -256,7 +256,7 @@ angular.module('frontendApp')
 
     var createOutliersWidget = function(dataset){
       var widget = {
-        sizeX: 2, sizeY: 2, row: 0, col: 0, type: 'outliers',
+        sizeX: 2, sizeY: 2, row: 0, col: 2, type: 'outliers',
         title: 'Outliers', vizType: 'list', defaultVizType: 'list',
         chartConfig: {
           // The below properties are watched separately for changes.
