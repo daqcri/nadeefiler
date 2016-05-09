@@ -254,22 +254,20 @@ angular.module('frontendApp')
       }
     };
 
-    $scope.createOutliersWidget = function(){
-        var dataset = $scope.selectedDataset;
-        if (!dataset) return;
-        var widget = {
-            sizeX: 2, sizeY: 2, row: 0, col: 0, type: 'outliers',
-            title: 'Outliers', vizType: 'list',
-            chartConfig: {
-              // The below properties are watched separately for changes.
-              title: {text: ''},
-              xAxis: {title: {text: ''}},
-              yAxis: {title: {text: ''}},
-              useHighStocks: false
-            }
-        };
-        updateWidgetChartSize(widget);
-        dataset.widgets.push(widget);
+    var createOutliersWidget = function(dataset){
+      var widget = {
+        sizeX: 2, sizeY: 2, row: 0, col: 0, type: 'outliers',
+        title: 'Outliers', vizType: 'list', defaultVizType: 'list',
+        chartConfig: {
+          // The below properties are watched separately for changes.
+          title: {text: ''},
+          xAxis: {title: {text: ''}},
+          yAxis: {title: {text: ''}},
+          useHighStocks: false
+        }
+      };
+      updateWidgetChartSize(widget);
+      return widget;
     };
 
     $scope.outlierClicked = function (event, result) {
@@ -362,6 +360,48 @@ angular.module('frontendApp')
       }
     }
 
+    var createDatatypesWidget = function(dataset) {
+      var widget = {
+        sizeX: 2, sizeY: 2, row: 0, col: 0, type: 'datatypes',
+        title: 'Data types', vizType: 'chart', defaultVizType: 'chart',
+        chartConfig: {
+          // highcharts standard options
+          options: {
+            chart: {
+              type: 'column'
+            },
+            credits: {enabled: false},
+            tooltip: {
+              headerFormat: '<span style="font-size: 10px">{point.key}</span><br/>',
+              pointFormat: '<span style="font-size: 12px">{series.name}: <b>{point.y}</b></span>'
+            },
+            plotOptions: {
+              column: {
+                stacking: 'normal'
+              },
+              series: {
+                cursor: 'pointer',
+                events: {
+                  click: function(event) {
+                    var result = dataset.results.messystreams[event.point.x];
+                    if ($scope.datatypeHasHistogram(result))
+                      $scope.datatypeClicked(event, result);
+                  }
+                }
+              }
+            },
+          },
+          // The below properties are watched separately for changes.
+          title: {text: ''},
+          xAxis: {title: {text: ''}},
+          yAxis: {title: {text: ''}},
+          useHighStocks: false
+        }
+      }
+      updateWidgetChartSize(widget);
+      return widget;
+    }
+
     $scope.resetDatasetWidgets = function() {
       // install root level widgets per dataset
       var dataset = $scope.selectedDataset;
@@ -372,52 +412,27 @@ angular.module('frontendApp')
         var keys = _.map(dataset.results.messystreams, 'key');
       }
 
-      if (dataset.widgets) {
-        dataset.widgets = [dataset.widgets[0]];
-        dataset.widgets[0].vizType = 'chart';
-      }
-      else {
-        var widget = {
-          sizeX: 2, sizeY: 2, row: 0, col: 0, type: 'datatypes',
-          title: 'Data types', vizType: 'chart',
-          chartConfig: {
-            // highcharts standard options
-            options: {
-              chart: {
-                type: 'column'
-              },
-              credits: {enabled: false},
-              tooltip: {
-                headerFormat: '<span style="font-size: 10px">{point.key}</span><br/>',
-                pointFormat: '<span style="font-size: 12px">{series.name}: <b>{point.y}</b></span>'
-              },
-              plotOptions: {
-                column: {
-                  stacking: 'normal'
-                },
-                series: {
-                  cursor: 'pointer',
-                  events: {
-                    click: function(event) {
-                      var result = dataset.results.messystreams[event.point.x];
-                      if ($scope.datatypeHasHistogram(result))
-                        $scope.datatypeClicked(event, result);
-                    }
-                  }
-                }
-              },
-            },
-            // The below properties are watched separately for changes.
-            title: {text: ''},
-            xAxis: {title: {text: ''}},
-            yAxis: {title: {text: ''}},
-            useHighStocks: false
-          }
+      // these are initial widgets
+      var missingWidgets = {
+        'datatypes': createDatatypesWidget,
+        'outliers': createOutliersWidget
+      };
+      var defaultWidgets = _.keys(missingWidgets);
+
+      // reset action: filter out widgets that are not part of initial widgets
+      dataset.widgets = _.filter(dataset.widgets || [], function(widget){
+        var pass = _.includes(defaultWidgets, widget.type)
+        if (pass) {
+          delete missingWidgets[widget.type];
+          widget.vizType = widget.defaultVizType;
         }
-        updateWidgetChartSize(widget);
-        dataset.widgets = [widget];
-        $scope.createOutliersWidget();
-      }
+        return pass;
+      })
+
+      // if any of the initial widgets are missing, add them accordingly
+      _.each(missingWidgets, function(constructor){
+        dataset.widgets.push(constructor(dataset))
+      })
     };
 
     var paginationOptions = {
