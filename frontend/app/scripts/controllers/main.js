@@ -101,7 +101,8 @@ angular.module('frontendApp')
       "float": "cyan",
       "integer": "blue",
       "boolean": "green",
-      "null": "red"
+      "null": "red",
+      "semantic": "black"
     }
 
     var widgetMargin = 10;
@@ -109,16 +110,16 @@ angular.module('frontendApp')
     var adaptDatasetResults = function(results, dataset) {
       // pivot results over "profiler" key
       var groups = _.groupBy(results, function(result){return result.profiler;});
+      var keys = _.map($scope.datasetGrid.columnDefs, 'name');
+      dataset.keys = keys;
       // TODO isolate messystreams logic in its module
       if (groups.messystreams) {
         var unsorted = _(groups.messystreams)
         .map(function(result){
           return {key: result.key, types: resultSorter(result, dataset.count), result: result}
         })
-        .groupBy(function(result){return result.key})
+        .groupBy('key')
         .value();
-        var keys = _.map($scope.datasetGrid.columnDefs, 'name');
-        dataset.keys = keys;
         groups.messystreams = _.map(keys, function(key){return unsorted[key][0];})
 
         // setup widget chart
@@ -134,6 +135,12 @@ angular.module('frontendApp')
             }
           })
         }
+      }
+
+      if (groups.semantic) {
+        groups.semantic = _.reduce(groups.semantic, function(hash, resource){
+          return _.set(hash, resource.key, resource.objects)
+        }, {})
       }
 
       dataset.results = groups;
@@ -524,20 +531,18 @@ angular.module('frontendApp')
     // TODO embed toggle logic in each widget definition module
     $scope.toggleWidget = function(widget) {
       if (!$scope.selectedDataset) {return null;}
+      var results = $scope.selectedDataset.results;
 
       switch(widget.type) {
         case 'data':
         case 'raw':
         case 'histogram':
-          return true;
-        case 'datatypes':
-          var results = $scope.selectedDataset.results;
-          return results && results.messystreams;
-        case 'outliers':
-          var results = $scope.selectedDataset.results;
-          return results && results.outliers;
         case 'outlierHistogram':
           return true;
+        case 'datatypes':
+          return results && results.messystreams;
+        case 'outliers':
+          return results && results.outliers;
         default:
           return false;
           // TODO: toggle widget based on its type/status
@@ -583,6 +588,15 @@ angular.module('frontendApp')
       return result.types.length > 1 || result.types[0].name !== 'null';
     }
 
+    $scope.datatypeHasSemantics = function(dataset, key) {
+      try {
+        return dataset.results.semantic[key].length > 0
+      }
+      catch(e) {
+        return false;
+      }
+    }
+
     var createHistogramWidget = function(dataset, key, type) {
       var widgetTitle = "'" + key + "' as " + type;
       var widget = {
@@ -590,7 +604,7 @@ angular.module('frontendApp')
         title: widgetTitle,
         key: key,
         datatype: type,
-        vizType: 'chart',
+        vizType: 'histogram',
         sort: 'value',
         chartConfig: {
           // highcharts standard options
@@ -631,19 +645,30 @@ angular.module('frontendApp')
       // query from server
       getHistogram(dataset, key, type)
       .then(function(){
-        widget.chartConfig.series = [{
-          name: '', grouping: true, // TODO grouping not working?
-          color: typesDictionary[type]
-        }];
         updateSeries(widget);
       })
     }
 
     var updateSeries = function(widget) {
       // console.log("updating histogram with new sort", widget.sort)
-      var histogram = $scope.selectedDataset.histograms[widget.key][widget.datatype][widget.sort];
-      widget.chartConfig.series[0].data = _.map(histogram, 'count');
-      widget.chartConfig.xAxis.categories = _.map(histogram, 'value');
+      if (widget.vizType === 'histogram') {
+        var histogram = $scope.selectedDataset.histograms[widget.key][widget.datatype][widget.sort];
+        widget.chartConfig.series = [{
+          name: '', grouping: true, // TODO grouping not working?
+          color: typesDictionary[widget.datatype],
+          data: _.map(histogram, 'count')
+        }];
+        widget.chartConfig.xAxis.categories = _.map(histogram, 'value');
+      }
+      else if (widget.vizType === 'semantic') {
+        var semantic = $scope.selectedDataset.results.semantic[widget.key];
+        widget.chartConfig.series = [{
+          name: 'Similar semantic types', grouping: false,
+          color: typesDictionary.semantic,
+          data: _.map(semantic, 'score')
+        }];
+        widget.chartConfig.xAxis.categories = _.map(semantic, 'object');
+      }
     }
 
 
@@ -668,7 +693,7 @@ angular.module('frontendApp')
     $scope.toggleWidgetOption = function(widget, optionKey, newValue) {
       if (widget[optionKey] === newValue) return;
       widget[optionKey] = newValue;
-      if (optionKey === 'sort')
+      if (optionKey === 'sort' || optionKey == 'vizType' && newValue != 'list')
         updateSeries(widget);
     }
 

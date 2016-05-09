@@ -120,8 +120,11 @@
                     </span>
                     <span class="box-content-actions-label">Show:</span>
                     <span class="{{selectedOptionClass(widget.vizType, 'list')}}" ng-click="toggleWidgetOption(widget, 'vizType', 'list')">Top 20</span>
-                    <span class="{{selectedOptionClass(widget.vizType, 'chart')}}" ng-click="toggleWidgetOption(widget, 'vizType', 'chart')">Chart</span>
-                    <span ng-if="widget.vizType === 'chart'">
+                    <span class="{{selectedOptionClass(widget.vizType, 'histogram')}}" ng-click="toggleWidgetOption(widget, 'vizType', 'histogram')">Histogram</span>
+                    <span class="{{selectedOptionClass(widget.vizType, 'semantic')}}" ng-click="toggleWidgetOption(widget, 'vizType', 'semantic')"
+                    ng-show="datatypeHasSemantics(selectedDataset, widget.key)"
+                    >Semantic</span>
+                    <span ng-if="widget.vizType === 'histogram'">
                       <span class="box-content-actions-label">Sort by:</span>
                       <span class="{{selectedOptionClass(widget.sort, 'count')}}" ng-click="toggleWidgetOption(widget, 'sort', 'count')">Count</span>
                       <span class="{{selectedOptionClass(widget.sort, 'value')}}" ng-click="toggleWidgetOption(widget, 'sort', 'value')">Value</span>
@@ -138,8 +141,8 @@
                     </a>
                   </div>
 
-                  <div ng-if="widget.vizType === 'chart'">
-                    <highchart id="chart_{{selectedDataset.id}}_{{$index}}" config="widget.chartConfig"></highchart>
+                  <div ng-if="widget.vizType === 'histogram' || widget.vizType === 'semantic'">
+                    <highchart id="chart_{{selectedDataset.id}}_{{$index}}_{{widget.vizType}}" config="widget.chartConfig"></highchart>
                   </div>
 
                 </div>
