@@ -6,7 +6,8 @@ var parser = require('csv-parse')({
   columns: ['subject', 'object']
 })
 var db, progress = 0, urlMongo = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/nadeefiler_dev';
-var finished, pending = 0, timerLabel = "Importing records"
+var finished, pending = 0, timerLabel = "Importing records", insertBuffer = []
+const INSERT_BUFFER_MAX = 1000
 
 process.stdin.setEncoding('utf8');
 
@@ -30,7 +31,7 @@ parser.on('error', function(err){
 });
 
 parser.on('finish', function(){
-  writeSubjectWithObjects(lastSubject, lastSubjectObjects)
+  writeSubjectWithObjects(lastSubject, lastSubjectObjects, true)
   finished = true
 });
 
@@ -39,23 +40,29 @@ function normalize(string) {
   return string.replace(/^<(.+)>$/, '$1').replace(/_/g, ' ')
 }
 
-function writeSubjectWithObjects(subject, subjectObjects) {
-  // insert into mongodb
-  pending++
-  db.collection('yagoSimpleTypes').insertOne({
+function writeSubjectWithObjects(subject, subjectObjects, flush) {
+  var tuple = {
     subject: normalize(subject.toLowerCase()),
     objects: subjectObjects
-  })
-  .then(function(){
-    pending--
-    progress++;
-    process.stdout.write("\r" + progress)
-    if (finished && pending === 0) {
-      process.stdout.write("\n")
-      console.timeEnd(timerLabel)
-      process.exit(0)
-    }
-  })
+  }
+  insertBuffer.push(tuple)
+  pending++
+  var insertBufferLength = insertBuffer.length
+  if (insertBufferLength === INSERT_BUFFER_MAX || flush) {
+    // insert into mongodb
+    db.collection('yagoSimpleTypes').insertMany(insertBuffer)
+    .then(function(){
+      pending -= insertBufferLength
+      progress += insertBufferLength
+      process.stdout.write("\r" + progress)
+      if (finished && pending === 0) {
+        process.stdout.write("\n")
+        console.timeEnd(timerLabel)
+        process.exit(0)
+      }
+    })
+    insertBuffer = []
+  }
 }
 
 function connectMongo(url) {
