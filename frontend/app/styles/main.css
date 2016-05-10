@@ -75,10 +75,22 @@ body {
 .box-header h4 {
   margin-top: 10px;
   display: inline-block;
+  white-space: nowrap;
 }
+.box-header-overflow-visible {
+  overflow: visible;
+  background-color: yellow;
+}
+.box-header-overflow-hidden {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .box-content {
   padding: 10px;
   padding: 0;
+  overflow: scroll;
 }
 .box-header-btns {
   top: 15px;
