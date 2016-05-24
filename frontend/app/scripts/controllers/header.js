@@ -102,6 +102,12 @@ angular.module('header.controller', [
       $scope.alerts.splice(index, 1);
     };
 
+    var toResources = function(datasets) {
+      return _.map(datasets, function(dataset){
+        return new nadeefilerServices.Dataset(dataset);
+      })
+    }
+
     $scope.uploadFiles = function(files) {
       $scope.uploadedFiles = files;
       if (files && files.length) {
@@ -111,7 +117,7 @@ angular.module('header.controller', [
           arrayKey: ''
         }).then(function (response) {
           $scope.alerts.push({type: 'success', message: response.data.message});
-          $scope.datasets = $scope.datasets.concat(response.data.datasets);
+          $scope.datasets = $scope.datasets.concat(toResources(response.data.datasets));
         }, function (response) {
           $scope.alerts.push({type: 'danger', message: 'Error uploading files (' + response.status + ')'});
         }, function (evt) {
