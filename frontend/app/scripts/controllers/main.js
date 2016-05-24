@@ -61,20 +61,6 @@ angular.module('main.controller', [
 
     });
 
-    var Tuple = $resource(
-      ENV.API_BASE_URL + '/tuples?datasetId=:datasetId',
-      {
-        datasetId: '@id'
-      }
-    );
-
-    var Result = $resource(
-      ENV.API_BASE_URL + '/results?datasetId=:datasetId&key=:key&histogram=:histogram',
-      {
-        datasetId: '@id'
-      }
-    );
-
     // sockets connection
     // TODO jshint complains about io being undefined
     var sailsSocket = io.sails.connect(ENV.SOCKETIO_BASE_URL);
@@ -170,7 +156,7 @@ angular.module('main.controller', [
     }
 
     var getResults = function(dataset) {
-      Result.query({
+      nadeefilerServices.Result.query({
         datasetId: dataset.id
       }, function(results){
         adaptDatasetResults(results, dataset);
@@ -180,7 +166,7 @@ angular.module('main.controller', [
     var getHistogram = function(dataset, key, type, limit) {
       var deferred = $q.defer();
 
-      Result.query({
+      nadeefilerServices.Result.query({
         datasetId: dataset.id,
         histogram: type,
         key: key,
@@ -385,7 +371,7 @@ angular.module('main.controller', [
 
       $scope.loadingData = true;
 
-      Tuple.query({
+      nadeefilerServices.Tuple.query({
         datasetId: $scope.selectedDataset.id,
         pageNumber: paginationOptions.pageNumber,
         pageSize: paginationOptions.pageSize,
