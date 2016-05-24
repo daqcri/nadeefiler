@@ -20,7 +20,7 @@ body {
 /* Custom page header */
 .header {
   border-bottom: 1px solid #e5e5e5;
-  margin-bottom: 10px;
+  margin-bottom: 10px !important;
 }
 /* Make the masthead heading the same height as the navigation */
 .header h3 {
@@ -28,6 +28,10 @@ body {
   margin-bottom: 0;
   line-height: 40px;
   padding-bottom: 19px;
+}
+
+.navbar {
+  margin-bottom: 0px;
 }
 
 /* Custom page footer */
@@ -195,3 +199,34 @@ a {
 }
 
 /* END profiler specific styles, should isolate */
+
+ul.selectors-dropdown-medium {
+  min-width: 240px;
+}
+
+ul.selectors-dropdown-wide {
+  min-width: 300px;
+}
+
+.badge-margin-right {
+  margin-right: 5px;
+}
+
+.delete-item {
+  font-size: 24px;
+}
+
+.header-button {
+  margin-top: 8px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.upload-progress {
+  width: 100px;
+  margin-top: 10px;
+}
+
+.alert {
+  margin: 5px 5px 0 5px;
+}

@@ -23,7 +23,9 @@ angular
     'ui.grid',
     'ui.grid.pagination',
     'ngLodash',
-    'highcharts-ng'
+    'highcharts-ng',
+    'header.controller',
+    'main.controller'
   ])
   .config(function ($routeProvider) {
     $routeProvider
@@ -32,10 +34,8 @@ angular
         controller: 'MainCtrl',
         controllerAs: 'main'
       })
-      .when('/about', {
-        templateUrl: 'views/about.html',
-        controller: 'AboutCtrl',
-        controllerAs: 'about'
+      .when('/github', {
+        templateUrl: 'views/github.html'
       })
       .otherwise({
         redirectTo: '/'

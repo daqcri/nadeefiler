@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="bower_components/angular-ui-grid/ui-grid.css" />
     <link rel="stylesheet" href="bower_components/bootstrap-css-only/css/bootstrap.css" />
     <link rel="stylesheet" href="bower_components/angular-gridster/dist/angular-gridster.min.css" />
+    <link rel="stylesheet" href="bower_components/components-font-awesome/css/font-awesome.css" />
     <!-- endbower -->
     <!-- endbuild -->
     <!-- build:css(.tmp) styles/main.css -->
@@ -23,7 +24,7 @@
     <![endif]-->
 
     <!-- Add your site or application content here -->
-    <div class="header">
+    <div class="header" ng-controller="HeaderCtrl">
       <div class="navbar navbar-default" role="navigation">
         <div class="container-fluid">
           <div class="navbar-header">
@@ -40,13 +41,92 @@
 
           <div class="collapse navbar-collapse" id="js-navbar-collapse">
 
-            <ul class="nav navbar-nav">
-              <li class="active"><a href="#/">Home</a></li>
-              <li><a ng-href="#/about">About</a></li>
-              <li><a ng-href="#/">Contact</a></li>
+            <ul class="nav navbar-nav" ng-init="activeNav='home'">
+              <li ng-class="{active: isRouteActive('/')}">
+                <a href="#/">Home</a>
+              </li>
+              <li ng-class="{active: isRouteActive('/github')}">
+                <a href="#/github">GitHub</a>
+              </li>
+              <li>
+                <!-- begin project select -->
+                <div class="btn-group header-button" uib-dropdown>
+                  <button id="project-select-button" type="button" class="btn btn-default" uib-dropdown-toggle>
+                    Project: {{selectedProject ? selectedProject.name : "(Select)"}} <span class="caret"></span>
+                  </button>
+                  <ul uib-dropdown-menu class="selectors-dropdown-medium dropdown-menu" role="menu" aria-labelledby="project-select-button">
+                    <li role="menuitem" ng-repeat="project in projects">
+                      <a href ng-click="selectProject(project)">
+                        <span class="list-item-restricted-medium">{{project.name}}</span>
+                        <button class="btn btn-danger menu-remove btn-xs" type="button">
+                          <span class="glyphicon glyphicon-remove" ng-click="deleteProject($event, project, $index)" aria-hidden="true"></span>
+                        </button>
+                      </a>
+                    </li>
+                    <li class="divider"></li>
+                    <li role="menuitem">
+                      <a href>
+                        <form role="form" ng-submit="addProject()">
+                          <div class="row">
+                            <div class="input-group input-group-sm">
+                              <input type="text" ng-model="newProjectName" class="form-control" placeholder="New project..." ng-click="preventDefault($event)">
+                              <span class="input-group-btn">
+                                <button class="btn btn-primary" type="submit" ng-click="addProject()">
+                                  <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                                </button>
+                              </span>
+                            </div>
+                          </div>
+                        </form>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+                <!-- end project select -->
+              </li>
+              <li>
+                <!-- begin dataset select -->
+                <div class="btn-group header-button" uib-dropdown ng-show="selectedProject">
+                  <button id="dataset-select-button" type="button" class="btn btn-default" uib-dropdown-toggle>
+                    Dataset: {{selectedDataset ? selectedDataset.name : "(Select)"}} <span class="caret"></span>
+                  </button>
+                  <ul uib-dropdown-menu class="selectors-dropdown-wide dropdown-menu" role="menu" aria-labelledby="dataset-select-button">
+                    <li role="menuitem" ng-repeat="dataset in datasets">
+                      <a href ng-click="selectDataset(dataset, $index)">
+                        {{dataset.name | limitTo: 20}}{{dataset.name.length > 20 ? '&hellip;' : ''}}
+                        <i ng-if="dataset.deleting" class="fa fa-spinner fa-spin menu-remove delete-item"></i>
+                        <button ng-if="!dataset.deleting" class="btn btn-danger menu-remove btn-xs" type="button">
+                          <span class="glyphicon glyphicon-remove" ng-click="deleteDataset($event, dataset, $index)" aria-hidden="true"></span>
+                        </button>
+                        <span class="menu-remove badge badge-margin-right">{{dataset.count}}</span>
+                      </a>
+                    </li>
+                    <li class="divider"></li>
+                    <li role="menuitem">
+                      <a href>
+                        <div ngf-select="uploadFiles($files)" multiple
+                          accept="text/csv">Upload CSV...
+                        </div>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+                <!-- end dataset select -->
+              </li>
+              <li>
+                <div class="upload-progress header-button">
+                  <uib-progressbar max="100" value="uploadProgress" ng-show="uploadProgress >= 0 && uploadProgress < 100"><span>{{uploadProgress}}%</span></uib-progressbar>
+                </div>
+              </li>
             </ul>
+
           </div>
+
+
         </div>
+      </div>
+      <div>
+        <uib-alert class="alert" ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.message}}</uib-alert>
       </div>
     </div>
 
@@ -100,7 +180,10 @@
         <script src="scripts/config.js"></script>
         <script src="scripts/app.js"></script>
         <script src="scripts/controllers/main.js"></script>
-        <script src="scripts/controllers/about.js"></script>
+        <script src="scripts/controllers/header.js"></script>
+        <script src="scripts/services/nadeefiler-service-project.js"></script>
+        <script src="scripts/services/nadeefiler-service-dataset.js"></script>
+        <script src="scripts/services/nadeefiler-services.js"></script>
         <!-- endbuild -->
 </body>
 </html>

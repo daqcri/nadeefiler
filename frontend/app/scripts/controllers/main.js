@@ -7,47 +7,59 @@
  * # MainCtrl
  * Controller of the frontendApp
  */
-angular.module('frontendApp')
+angular.module('main.controller', [
+    'nadeefiler.services'
+  ])
   .controller('MainCtrl', function(
     $scope,
     $rootScope,
     $resource,
     ENV,
-    Upload,
     uiGridConstants,
     lodash,
     $q,
-    highchartsNG
+    highchartsNG,
+    nadeefilerServices
   ) {
     // prepare RESTful resources
     // TODO: move into a factory
 
     var _ = lodash;
 
-    var Project = $resource(
-      ENV.API_BASE_URL + '/projects/:projectId',
-      {
-        projectId: '@id'
-      },
-      {
-        update: {
-          method: 'PUT'
-        }
-      }
-    );
+    $scope.$on('project.selected', function(event, project){
+      if ($scope.selectedProject)
+        socketUnsubscribe($scope.selectedProject);
 
-    var Dataset = $resource(
-      ENV.API_BASE_URL + '/datasets/:action/:datasetId?projectId=:projectId',
-      {
-        datasetId: '@id'
-      },
-      {
-        profile: {
-          method: 'PUT',
-          params: {action: 'profile'}
+      if (project)
+        socketSubscribe(project);
+
+      $scope.selectedProject = project;
+    });
+
+    $scope.$on('dataset.selected', function(event, dataset){
+      $scope.selectedDataset = dataset;
+      $scope.datasetGrid.columnDefs = [];
+      // if ($scope.gridApi)
+      //   $scope.gridApi.core.notifyDataChange(uiGridConstants.dataChange.ALL);
+
+      if (dataset) {
+        $scope.datasetGrid.totalItems = dataset.count;
+        paginationOptions.sort = null;
+        // paginationOptions.pageNumber = 1;
+        // $scope.gridApi.pagination.seek(1);
+        getPage().then(function(){
+          // request dataset results
+          // this is chained after getPage because results needs physical order of keys to sort itself
+          if (!dataset.results) {
+            getResults(dataset);
+          }
+        })
+        if (!dataset.widgets) {
+          $scope.resetDatasetWidgets();
         }
       }
-    );
+
+    });
 
     var Tuple = $resource(
       ENV.API_BASE_URL + '/tuples?datasetId=:datasetId',
@@ -120,6 +132,7 @@ angular.module('frontendApp')
         })
         .groupBy('key')
         .value();
+        console.log("keys of grid", keys)
         groups.messystreams = _.map(keys, function(key){return unsorted[key][0];})
 
         // setup widget chart
@@ -156,48 +169,6 @@ angular.module('frontendApp')
         .value();
     }
 
-    Project.query(function(projects){
-      $scope.projects = projects;
-    });
-
-    $scope.addProject = function () {
-      var project = new Project({name: $scope.newProjectName});
-      project.$save(function(project){
-        $scope.projects.push(project);
-        $scope.selectProject(project);
-      });
-      $scope.newProjectName = '';
-    };
-
-    $scope.removeProject = function($event, project, index) {
-      project.$remove(function(){
-        $scope.projects.splice(index, 1);
-        if (project === $scope.selectedProject) {
-          $scope.selectProject(null);
-        }
-      });
-      $scope.preventDefault($event);
-    };
-
-    $scope.selectProject = function(project) {
-      if ($scope.selectedProject === project) {
-        console.log("selecting same project, doing nothing");
-        return;
-      }
-
-      if ($scope.selectedProject)
-        socketUnsubscribe($scope.selectedProject);
-
-      $scope.selectedProject = project;
-      if (project) {
-        Dataset.query({projectId: project.id}, function(datasets){
-          $scope.datasets = datasets;
-          $scope.selectDataset(null);
-          socketSubscribe(project);
-        });
-      }
-    };
-
     var getResults = function(dataset) {
       Result.query({
         datasetId: dataset.id
@@ -228,39 +199,6 @@ angular.module('frontendApp')
       return deferred.promise;
     }
 
-    $scope.selectDataset = function(dataset, index, $event) {
-      $scope.selectedDataset = dataset;
-      $scope.selectedDatasetIndex = index;
-
-      if (dataset) {
-        $scope.datasetGrid.totalItems = dataset.count;
-        $scope.datasetGrid.columnDefs = [];
-        paginationOptions.sort = null;
-        // paginationOptions.pageNumber = 1;
-        // $scope.gridApi.pagination.seek(1);
-        getPage().then(function(){
-          // request dataset results
-          // this is chained after getPage because results needs physical order of keys to sort itself
-          if (!dataset.results) {
-            getResults(dataset);
-          }
-        })
-        if (!dataset.widgets) {
-          $scope.resetDatasetWidgets();
-        }
-      }
-      $scope.preventDefault($event);
-    };
-
-    $scope.deleteDataset = function() {
-      if ($scope.selectedDataset) {
-        $scope.selectedDataset.$delete(function(){
-          $scope.datasets.splice($scope.selectedDatasetIndex, 1);
-          $scope.selectDataset(null);
-        });
-      }
-    };
-
     var createOutliersWidget = function(dataset){
       var widget = {
         sizeX: 2, sizeY: 2, row: 0, col: 2, type: 'outliers',
@@ -283,7 +221,7 @@ angular.module('frontendApp')
       _.each(result.fields, function(field){
           $scope.createOutlierHistogramWidget(dataset, field);
       });
-      $scope.preventDefault(event);
+      $rootScope.preventDefault(event);
     };
 
     $scope.createOutlierFeatureWidget = function(dataset, outlier, fields) {
@@ -351,12 +289,6 @@ angular.module('frontendApp')
         dataset.widgets.push(widget);
     };
 
-
-    $scope.profileDataset = function() {
-      if ($scope.selectedDataset) {
-        Dataset.profile({}, $scope.selectedDataset);
-      }
-    };
 
     var updateWidgetChartSize = function(widget) {
       var gridsterElement = angular.element(document.querySelector('div[gridster]'))[0]
@@ -462,6 +394,7 @@ angular.module('frontendApp')
       }, function(tuples){
         $scope.datasetGrid.data = tuples;
         $scope.gridApi.core.notifyDataChange(uiGridConstants.dataChange.ALL);
+        console.log("keys after notifyDataChange", _.map($scope.datasetGrid.columnDefs, 'name'));
         $scope.loadingData = false;
         deferred.resolve();
       });
@@ -469,6 +402,7 @@ angular.module('frontendApp')
       return deferred.promise;
     };
 
+    console.log("defining $scope.datasetGrid")
     $scope.datasetGrid = {
       paginationPageSizes: [10, 25, 50, 100],
       paginationPageSize: 10,
@@ -476,6 +410,9 @@ angular.module('frontendApp')
       useExternalSorting: true,
       onRegisterApi: function(gridApi) {
         $scope.gridApi = gridApi;
+        // $scope.datasetGrid.columnDefs = [];
+        gridApi.core.notifyDataChange(uiGridConstants.dataChange.ALL);
+        console.log("registered gridApi")
         gridApi.core.on.sortChanged($scope, function(grid, sortColumns) {
           if (sortColumns.length === 0) {
             paginationOptions.sort = null;
@@ -551,37 +488,6 @@ angular.module('frontendApp')
 
     $scope.removeWidget = function(widget, index) {
       $scope.selectedDataset.widgets.splice(index, 1);
-    };
-
-    $scope.preventDefault = function($event) {
-      if ($event) {
-        $event.preventDefault();
-        $event.stopPropagation();
-      }
-    };
-
-    $scope.alerts = [];
-    $scope.closeAlert = function(index) {
-      $scope.alerts.splice(index, 1);
-    };
-
-    $scope.uploadFiles = function (files) {
-      $scope.uploadedFiles = files;
-      if (files && files.length) {
-        Upload.upload({
-          url: ENV.API_BASE_URL + '/datasets',
-          data: {projectId: $scope.selectedProject.id, files: files},
-          arrayKey: ''
-        }).then(function (response) {
-          $scope.alerts.push({type: 'success', message: response.data.message});
-          $scope.datasets = $scope.datasets.concat(response.data.datasets);
-        }, function (response) {
-          $scope.alerts.push({type: 'danger', message: 'Error uploading files (' + response.status + ')'});
-        }, function (evt) {
-          $scope.uploadProgress =
-            Math.min(100, parseInt(100.0 * evt.loaded / evt.total));
-        });
-      }
     };
 
     $scope.datatypeHasHistogram = function(result) {
@@ -682,7 +588,7 @@ angular.module('frontendApp')
           createHistogramWidget(dataset, result.key, type.name)
       })
 
-      $scope.preventDefault(event);
+      $rootScope.preventDefault(event);
     }
 
     $scope.selectedOptionClass = function(currentValue, newValue) {
@@ -716,6 +622,4 @@ angular.module('frontendApp')
       updateDisplayedWidgetsChartSize();
     })
 
-  })
-
-  ;
+  });

@@ -1,66 +1,7 @@
 <div class="container-fluid">
 
   <div class="row">
-    <div class="col-md-2">
-
-      <!-- project select -->
-      <div class="btn-group" uib-dropdown>
-        <button id="single-button" type="button" class="btn btn-default" uib-dropdown-toggle>
-          Project: {{selectedProject ? selectedProject.name : "(Select)"}} <span class="caret"></span>
-        </button>
-        <ul uib-dropdown-menu role="menu" aria-labelledby="single-button">
-          <li role="menuitem" ng-repeat="project in projects">
-            <a href ng-click="selectProject(project)">
-              {{project.name}}
-              <button class="btn btn-danger menu-remove btn-xs" type="button">
-                <span class="glyphicon glyphicon-remove" ng-click="removeProject($event, project, $index)" aria-hidden="true"></span>
-              </button>
-            </a>
-          </li>
-          <li class="divider"></li>
-          <li role="menuitem">
-            <a href>
-              <form role="form" ng-submit="addProject()">
-                <div class="row">
-                  <div class="input-group input-group-sm">
-                    <input type="text" ng-model="newProjectName" class="form-control" placeholder="New project..." ng-click="preventDefault($event)">
-                    <span class="input-group-btn">
-                      <button class="btn btn-primary" type="submit" ng-click="addProject()">
-                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                      </button>
-                    </span>
-                  </div>
-                </div>
-              </form>
-            </a>
-          </li>
-        </ul>
-      </div>
-
-      <!-- dataset upload -->
-      <div ng-show="selectedProject">
-        <br>
-        <div class="list-group">
-          <a href="#" class="list-group-item {{d === selectedDataset ? 'active' : ''}}" ng-repeat="d in datasets" ng-click="selectDataset(d, $index, $event)">
-            <span class="badge">{{d.count}}</span>
-            {{d.name}}
-          </a>
-        </div>
-        <uib-progressbar max="100" value="uploadProgress" ng-show="uploadProgress >= 0 && uploadProgress < 100"><span>{{uploadProgress}}%</span></uib-progressbar>
-        <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.message}}</uib-alert>
-        <div class="btn-group-vertical" role="toolbar">
-          <div class="btn btn-primary" ngf-select="uploadFiles($files)" multiple
-            accept="text/csv">Upload CSV...
-          </div>
-          <div class="btn btn-danger" role="group" ng-show="selectedDataset" ng-click="deleteDataset()">Delete</div>
-          <div class="btn btn-default" role="group" ng-show="selectedDataset" ng-click="profileDataset()">Profile</div>
-          <div class="btn btn-default" role="group" ng-show="selectedDataset" ng-click="resetDatasetWidgets()">Reset widgets</div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="col-md-10">
+    <div class="col-md-12">
 
       <div ui-grid="datasetGrid" __ui-grid-auto-resize ui-grid-pagination class="datasetGrid" ng-if="selectedDataset"></div>
       <div ng-show="loadingData">Loading...</div>

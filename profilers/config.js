@@ -16,5 +16,5 @@ module.exports = [
       "semantic"
     ]
   },
-  "outliers"
+  //"outliers"
 ];
