@@ -114,7 +114,7 @@ angular.module('main.controller', [
       if (groups.messystreams) {
         var unsorted = _(groups.messystreams)
         .map(function(result){
-          return {key: result.key, types: resultSorter(result, dataset.count), result: result}
+          return {key: cleanKeyName(result.key), types: resultSorter(result, dataset.count), result: result}
         })
         .groupBy('key')
         .value();
@@ -366,6 +366,21 @@ angular.module('main.controller', [
       sort: null
     };
 
+    var cleanKeyName = function(key) {
+      return key.replace(/[\(\)]/g, ' ');
+    }
+
+    var cleanTuples = function(tuples) {
+      return _(tuples)
+        .map(function(tuple){
+          return _(tuple)
+            .reduce(function(hash, value, key){
+              return _.set(hash, cleanKeyName(key), value);
+            }, {})
+        })
+        .value();
+    }
+
     var getPage = function() {
       var deferred = $q.defer();
 
@@ -378,9 +393,14 @@ angular.module('main.controller', [
         sortColumn: paginationOptions.sort ? paginationOptions.sort.col : null,
         sortDirection: paginationOptions.sort ? paginationOptions.sort.dir : null
       }, function(tuples){
-        $scope.datasetGrid.data = tuples;
+        // set data
+        $scope.datasetGrid.data = cleanTuples(tuples);
+        // set header
+        if (tuples.length > 0)
+          $scope.datasetGrid.columnDefs = _(tuples[0]).keys().map(function(key){
+            return {displayName: key, name: cleanKeyName(key)};
+          }).value();
         $scope.gridApi.core.notifyDataChange(uiGridConstants.dataChange.ALL);
-        console.log("keys after notifyDataChange", _.map($scope.datasetGrid.columnDefs, 'name'));
         $scope.loadingData = false;
         deferred.resolve();
       });
