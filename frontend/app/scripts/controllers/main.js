@@ -21,8 +21,6 @@ angular.module('main.controller', [
     highchartsNG,
     nadeefilerServices
   ) {
-    // prepare RESTful resources
-    // TODO: move into a factory
 
     var _ = lodash;
 
@@ -55,11 +53,15 @@ angular.module('main.controller', [
           }
         })
         if (!dataset.widgets) {
-          $scope.resetDatasetWidgets();
+          resetDatasetWidgets();
         }
       }
 
     });
+
+    $scope.$on('dataset.reset', function(event){
+      resetDatasetWidgets();
+    })
 
     // sockets connection
     // TODO jshint complains about io being undefined
@@ -327,7 +329,7 @@ angular.module('main.controller', [
       return widget;
     }
 
-    $scope.resetDatasetWidgets = function() {
+    var resetDatasetWidgets = function() {
       // install root level widgets per dataset
       var dataset = $scope.selectedDataset;
       if (!dataset) return;

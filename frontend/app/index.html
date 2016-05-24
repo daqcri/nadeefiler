@@ -113,6 +113,16 @@
                 </div>
                 <!-- end dataset select -->
               </li>
+              <li ng-show="selectedDataset">
+                <button type="button" class="btn btn-default header-button" ng-click="resetDatasetWidgets()">
+                  Reset Widgets
+                </button>
+              </li>
+              <li ng-show="debug && selectedDataset">
+                <button type="button" class="btn btn-primary header-button" ng-click="profileDataset()">
+                  Profile
+                </button>
+              </li>
               <li>
                 <div class="upload-progress header-button">
                   <uib-progressbar max="100" value="uploadProgress" ng-show="uploadProgress >= 0 && uploadProgress < 100"><span>{{uploadProgress}}%</span></uib-progressbar>

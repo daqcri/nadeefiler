@@ -16,9 +16,12 @@ angular.module('header.controller', [
     $location,
     Upload,
     ENV,
+    debug,
     nadeefilerServices
   ) {
 
+    $scope.debug = debug;
+    
     $scope.isRouteActive = function(route) {
       return route === $location.path();
     }
@@ -90,6 +93,10 @@ angular.module('header.controller', [
       });
       $rootScope.preventDefault($event);
     };
+
+    $scope.resetDatasetWidgets = function() {
+      $rootScope.$broadcast('dataset.reset');
+    }
 
     $scope.profileDataset = function() {
       if ($scope.selectedDataset) {
