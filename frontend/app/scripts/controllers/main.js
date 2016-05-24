@@ -610,6 +610,7 @@ angular.module('main.controller', [
     }
 
     var updateDisplayedWidgetsChartSize = function() {
+      if (!$scope.selectedDataset) return;
       _.each($scope.selectedDataset.widgets, function(widget){
         updateWidgetChartSize(widget);
       })
