@@ -23,8 +23,9 @@ module.exports = {
       adapter: require('skipper-csv'),
       csvOptions: {delimiter: ',', columns: true},
       rowHandler: function(row, fd, file){
-        var createTuple = function(row) {
+        var createTuple = function(row, order) {
           row.dataset = fd;
+          row[Tuple.ORDER_COLUMN] = order;
           Tuple.create(row).exec(function(err){
             if (err) return res.serverError(err);
           });
@@ -35,8 +36,10 @@ module.exports = {
         else
           totalRows[fd] = 1;
 
+        var order = totalRows[fd];
+
         if (datasets[fd]) {
-          createTuple(row);
+          createTuple(row, order);
         }
         else {
           datasets[fd] = 1;
@@ -50,7 +53,7 @@ module.exports = {
             // the solution here is to keep track of datasets by fd
             // tuples could be created even before datasets are created
             datasets[fd] = dataset;
-            createTuple(row);
+            createTuple(row, order);
             return dataset;
           }))
         }

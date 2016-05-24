@@ -13,18 +13,21 @@ module.exports = {
       datasetId = req.param('datasetId'),
       pageNumber = req.param('pageNumber') || 1,
       pageSize = req.param('pageSize') || 10,
-      sortColumn = req.param('sortColumn') || 'createdAt',
+      sortColumn = req.param('sortColumn') || Tuple.ORDER_COLUMN,
       sortDirection = req.param('sortDirection') || 'ASC';
 
     if (!datasetId) return res.badRequest("Missing datasetId");
 
-    Tuple.find({dataset: datasetId})
-    .sort(sortColumn + " " + sortDirection)
-    .skip((pageNumber - 1) * pageSize)
-    .limit(pageSize)
-    .exec(function(err, tuples){
-      return res.json(tuples);
-    })
+    var filter = {dataset: datasetId};
+    filter[Tuple.ORDER_COLUMN] = {'$gt': (pageNumber - 1) * pageSize};
+
+    Tuple
+      .find(filter)
+      .sort(sortColumn + " " + sortDirection)
+      .limit(pageSize)
+      .exec(function(err, tuples){
+        return res.json(tuples);
+      })
   }
 
 };

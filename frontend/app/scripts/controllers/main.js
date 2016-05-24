@@ -416,6 +416,7 @@ angular.module('main.controller', [
       paginationPageSize: 10,
       useExternalPagination: true,
       useExternalSorting: true,
+      enableSorting: false, // pagination in arbitrary sorted results in mongo is challenging
       onRegisterApi: function(gridApi) {
         $scope.gridApi = gridApi;
         // $scope.datasetGrid.columnDefs = [];
