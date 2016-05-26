@@ -21,7 +21,7 @@ angular.module('header.controller', [
   ) {
 
     $scope.debug = debug;
-    
+
     $scope.isRouteActive = function(route) {
       return route === $location.path();
     }
@@ -118,14 +118,18 @@ angular.module('header.controller', [
     $scope.uploadFiles = function(files) {
       $scope.uploadedFiles = files;
       if (files && files.length) {
+        $scope.uploadProgress = 0;
+        $scope.uploading = true;
         Upload.upload({
           url: ENV.API_BASE_URL + '/datasets',
           data: {projectId: $scope.selectedProject.id, files: files},
           arrayKey: ''
         }).then(function (response) {
+          $scope.uploading = false;
           $scope.alerts.push({type: 'success', message: response.data.message});
           $scope.datasets = $scope.datasets.concat(toResources(response.data.datasets));
         }, function (response) {
+          $scope.uploading = false;
           $scope.alerts.push({type: 'danger', message: 'Error uploading files (' + response.status + ')'});
         }, function (evt) {
           $scope.uploadProgress =

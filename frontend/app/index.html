@@ -123,11 +123,6 @@
                   Profile
                 </button>
               </li>
-              <li>
-                <div class="upload-progress header-button">
-                  <uib-progressbar max="100" value="uploadProgress" ng-show="uploadProgress >= 0 && uploadProgress < 100"><span>{{uploadProgress}}%</span></uib-progressbar>
-                </div>
-              </li>
             </ul>
 
           </div>
@@ -136,6 +131,9 @@
         </div>
       </div>
       <div>
+        <div class="upload-progress">
+          <uib-progressbar max="100" value="uploadProgress" ng-show="uploading"><span>{{uploadProgress}}%</span></uib-progressbar>
+        </div>
         <uib-alert class="alert" ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.message}}</uib-alert>
       </div>
     </div>

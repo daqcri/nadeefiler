@@ -223,8 +223,8 @@ ul.selectors-dropdown-wide {
 }
 
 .upload-progress {
-  width: 100px;
-  margin-top: 10px;
+  width: 99%;
+  margin: 10px 0 -10px 5px;
 }
 
 .alert {
