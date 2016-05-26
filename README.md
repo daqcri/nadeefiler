@@ -58,10 +58,13 @@ downloaded from [here](http://qcridatasets.s3-website-us-west-1.amazonaws.com/ya
     curl -o yagoSimpleTypes-nadeefiler.tsv.gz http://qcridatasets.s3-website-us-west-1.amazonaws.com/yagoSimpleTypes-nadeefiler.tsv.gz
     # decompress
     gunzip yagoSimpleTypes-nadeefiler.tsv.gz
-    # import (honors MONGOLAB_URI environment variable)
+    # import (honors MONGOLAB_URI environment variable, defaults to localhost/nadeefiler_dev)
     ./import-yago.js < yagoSimpleTypes-nadeefiler.tsv
     # create the text index from mongo shell
+    # 1. Using MONGOLAB_URI if set:
     mongo $MONGOLAB_URI
+    # 2. Or using localhost/nadeefiler_dev (development only):
+    mongo nadeefiler_dev
     # from the shell prompt:
     db.yagoSimpleTypes.createIndex({subject: 'text'})
 
