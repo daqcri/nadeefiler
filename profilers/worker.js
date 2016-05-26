@@ -1,5 +1,15 @@
 #!/usr/bin/env node
 
+/* RESPECTS THESE ENVIRONMENT VARIABLES:
+
+MONGOLAB_URI || 'mongodb://localhost:27017/nadeefiler_dev'
+CLOUDAMQP_URL || "amqp://localhost"
+AMQP_QUEUE || 'sails'
+AMQP_PREFETCH || 3
+
+*/
+
+
 (function() {
   function connectMongo(url) {
     console.log("Connecting to mongodb at ", url);
@@ -10,7 +20,7 @@
     })
   }
 
-  function connectAMQP(url, queue) {
+  function connectAMQP(url, queue, prefetch) {
     console.log("Connecting to AMQP server at %s...", url);
     return require('amqplib').connect(url)
     .then(function(conn) {
@@ -18,8 +28,8 @@
       return conn.createChannel()
       .then(function(ch) {
         ch.assertQueue(queue, {durable: true});
-        ch.prefetch(3); // don't handle more than n jobs at a time
-        console.log("Waiting for messages in '%s'...", queue);
+        ch.prefetch(prefetch); // don't handle more than n jobs at a time
+        console.log("Waiting for messages in '%s' queue prefetching %d at most...", queue, prefetch);
         ch.consume(queue, function(msg) {
           var task = JSON.parse(msg.content);
           var taskId = "task[" + msg.content + "]:" + msg.fields.consumerTag;
@@ -106,6 +116,7 @@
     // create mongo query
     var query = {dataset: dataset},
         projection = {_id: 0, createdAt: 0, updatedAt: 0, dataset: 0};
+    projection[TUPLE_ORDER_COLUMN] = 0;
 
     var readTuples = function(keys) {
       // stream query results
@@ -219,15 +230,17 @@
   var urlMongo = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/nadeefiler_dev';
   var urlAMQP = process.env.CLOUDAMQP_URL || "amqp://localhost";
   var queue = process.env.AMQP_QUEUE || 'sails';
+  var amqpPrefetch = parseInt(process.env.AMQP_PREFETCH) || 3;
   var amqpConnection, amqpChannel, db;
   var stream = require('stream');
   var profilers = loadProfilers(require('./config'));
+  const TUPLE_ORDER_COLUMN = '__order';
   console.log(JSON.stringify(profilers));
 
   connectMongo(urlMongo)
   .then(function(mongoDb){
     db = mongoDb;
-    return connectAMQP(urlAMQP, queue)
+    return connectAMQP(urlAMQP, queue, amqpPrefetch)
     .then(function(result){
       amqpChannel = result.amqpChannel;
       amqpConnection = result.amqpConnection;
