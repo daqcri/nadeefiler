@@ -6,6 +6,9 @@
       <div ui-grid="datasetGrid" __ui-grid-auto-resize ui-grid-pagination class="datasetGrid" ng-if="selectedDataset"></div>
       <div ng-show="loadingData">Loading...</div>
 
+      <h3 ng-if="!selectedProject">Select a project from above to start</h3>
+      <h3 ng-if="selectedProject && !selectedDataset">Now select a dataset from above to start</h3>
+
       <div gridster="gridsterOpts">
         <ul>
           <li gridster-item="widget" ng-repeat="widget in selectedDataset.widgets" ng-if="toggleWidget(widget)">
