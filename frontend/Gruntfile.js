@@ -456,6 +456,9 @@ module.exports = function (grunt) {
         constants: {
           ENV: grunt.file.readJSON('config/production.json')
         },
+        values: {
+          debug: false
+        }
       }
     }
 
