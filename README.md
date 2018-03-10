@@ -25,17 +25,11 @@ Get the code
 
     cd nadeefiler
     
-Build
+Build and run:
 
-    docker-compose build
+    docker-compose up --build
 
-Run
-
-    docker-compose up
-
-Browse
-
-    http://localhost:9000
+Now you can visit [http://localhost:9000](http://localhost:9000).
 
 ### Production
 
