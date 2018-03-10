@@ -9,7 +9,6 @@
     "csv-parse": "^1.0.2",
     "ejs": "2.3.4",
     "grunt": "0.4.5",
-    "grunt-cli": "^1.2.0",
     "grunt-contrib-clean": "0.6.0",
     "grunt-contrib-coffee": "0.13.0",
     "grunt-contrib-concat": "0.5.1",
@@ -34,10 +33,7 @@
   },
   "scripts": {
     "debug": "node debug app.js",
-    "start": "node app.js",
-    "postinstall": "git submodule init && git submodule update && cd profilers && npm install && cd ../frontend && npm install && node_modules/bower/bin/bower install && grunt build",
-    "livereload": "cd frontend && grunt serve",
-    "profilers": "cd profilers && npm start"
+    "start": "node app.js"
   },
   "main": "app.js",
   "repository": {

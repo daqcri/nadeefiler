@@ -1,9 +1,0 @@
-zombie kr # finished processes are left zombie, k to kill, r to relaunch
-defutf8 on
-defscrollback 10000
-hardstatus alwayslastline
-hardstatus string "%{= KW} %H [%`] %{= Kw}|%{-} %-Lw%{= bW}%n%f %t%{-}%+Lw %=%C%a %Y-%M-%d"
-screen -t "sails" npm start
-screen -t "livereload" npm run livereload 
-screen -t "profilers" npm run profilers
-screen -t "bash" 

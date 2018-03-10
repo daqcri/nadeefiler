@@ -21,4 +21,7 @@ module.exports = {
   //   connection: 'CONNECTION_HERE'
   // },
 
+  amqp: {
+    url: process.env.CLOUDAMQP_URL
+  }
 };
