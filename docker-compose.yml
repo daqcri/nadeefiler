@@ -10,6 +10,8 @@ services:
     command: 
       - node_modules/grunt-cli/bin/grunt
       - serve
+    volumes:
+      - ./frontend/app:/home/app
   api:
     build:
       context: .
