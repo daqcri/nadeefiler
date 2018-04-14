@@ -44,11 +44,11 @@ module.exports.sockets = {
   // -OR-
   //
 
-  adapter: 'socket.io-redis',
-  host: process.env.REDIS_HOST,
-  port: process.env.REDIS_PORT,
-  db: 0,
-  pass: process.env.REDIS_PASSWORD,
+  // adapter: 'socket.io-redis',
+  // host: process.env.REDIS_HOST,
+  // port: process.env.REDIS_PORT,
+  // db: 0,
+  // pass: process.env.REDIS_PASSWORD,
 
 
 

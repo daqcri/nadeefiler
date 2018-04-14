@@ -8,8 +8,5 @@ $waitfor mongo:27017 -t 60 -s -q
 # wait for rabbitmq
 $waitfor rabbitmq:5672 -t 60 -s -q
 
-# wait for redis
-$waitfor redis:6379 -t 60 -s -q
-
 # ready to run requested command
 exec "$@"

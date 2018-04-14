@@ -7,7 +7,7 @@ services:
         - node_env=development
     ports:
       - "9000:9000"
-    command: 
+    command:
       - node_modules/grunt-cli/bin/grunt
       - serve
     volumes:
@@ -20,20 +20,16 @@ services:
     environment:
       - MONGOLAB_URI=mongodb://mongo:27017/nadeefiler
       - CLOUDAMQP_URL=amqp://rabbitmq
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=
     ports:
       - "1337:1337"
     entrypoint:
       - ./script/wait-for-services.sh
-    command: 
+    command:
       - npm
       - start
     depends_on:
       - mongo
       - rabbitmq
-      - redis
   profilers:
     build:
       context: profilers
@@ -54,5 +50,3 @@ services:
     image: mongo:latest
   rabbitmq:
     image: rabbitmq:latest
-  redis:
-    image: redis:latest
