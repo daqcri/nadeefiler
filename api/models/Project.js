@@ -13,6 +13,11 @@ module.exports = {
       unique: true,
       required: true
     },
+    deleted:{
+      type: 'boolean',
+      required: true,
+      defaultsTo: false
+    },
     datasets: {
       collection: 'dataset',
       via: 'project'

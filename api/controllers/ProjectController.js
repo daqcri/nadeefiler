@@ -19,7 +19,17 @@ module.exports = {
     if (!projectId) return res.badRequest("Missing trailing /:projectId ");
     sails.sockets.leave(req, projectId);
     res.ok();
+  },
+  find: function(req, res) {
+    Project.find({deleted: false}).sort("createdAt").exec(function(err, projects){
+      return res.json(projects)
+    });
+  },
+  destroy: function(req, res) {
+    var projectId = req.params.id;
+    Project.update({id: projectId},{deleted: true}).exec(function(err, updatedProject){
+      return res.json(updatedProject);
+    });
   }
-
 };
 

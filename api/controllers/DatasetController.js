@@ -8,7 +8,7 @@
 var _ = require('lodash');
 
 module.exports = {
-	
+
   create: function(req, res) {
     // raise connection timeout to 10 minutes for large uploads
     req.connection.setTimeout(10 * 60 * 1000);
@@ -90,7 +90,7 @@ module.exports = {
     var projectId = req.param('projectId');
     if (!projectId) return res.badRequest("Missing projectId");
 
-    Dataset.find({project: projectId}).sort("createdAt").exec(function(err, datasets){
+    Dataset.find({project: projectId, deleted: false}).sort("createdAt").exec(function(err, datasets){
       return res.json(datasets)
     });
   },
@@ -102,6 +102,13 @@ module.exports = {
     if (!projectId) return res.badRequest("Missing project");
     Dataset.profile(datasetId, projectId);
     return res.ok();
+  },
+
+  destroy: function(req, res) {
+    var datasetId = req.params.id;
+    Dataset.update({id: datasetId},{deleted: true}).exec(function(err, updatedDataset){
+     return res.json(updatedDataset);
+    });
   }
 };
 
