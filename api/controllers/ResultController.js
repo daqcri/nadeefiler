@@ -9,7 +9,7 @@ module.exports = {
   // TODO disable unused REST routes aka blueprints
 
   find: function(req, res) {
-    var 
+    var
       datasetId = req.param('datasetId'),
       profiler = req.param('profiler')
       histogram = req.param('histogram'),
@@ -18,18 +18,24 @@ module.exports = {
 
     if (!datasetId) return res.badRequest("Missing datasetId");
 
-    var filter = {dataset: datasetId, histogram: null}, sort;
-    if (histogram) {
-      filter.histogram = histogram;
-      filter.key = key;
-      sort = limit ? "count desc" : "value asc";
-    }
-    console.log("Filtering result using", filter, sort, limit);
-    Result.find({where: filter, sort: sort, limit: limit})
-    .exec(function(err, results){
-      return err ? res.serverError(err) : res.json(results);
+    // Filter on dataset deleted flag before returning results
+    var datasetFilter = {id: datasetId, deleted: false};
+    Dataset.count(datasetFilter).exec(function(err, count){
+      if(count == 0) return res.ok([]);
+
+      var resultFilter = {dataset: datasetId, histogram: null}, sort;
+      if (histogram) {
+        resultFilter.histogram = histogram;
+        resultFilter.key = key;
+        sort = limit ? "count desc" : "value asc";
+      }
+      console.log("Filtering result using", resultFilter, sort, limit);
+      Result.find({where: resultFilter, sort: sort, limit: limit})
+      .exec(function(err, results){
+        return err ? res.serverError(err) : res.json(results);
+      })
     })
   }
-	
+
 };
 

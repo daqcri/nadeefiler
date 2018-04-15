@@ -90,9 +90,16 @@ module.exports = {
     var projectId = req.param('projectId');
     if (!projectId) return res.badRequest("Missing projectId");
 
-    Dataset.find({project: projectId, deleted: false}).sort("createdAt").exec(function(err, datasets){
-      return res.json(datasets)
-    });
+    // Filter on project deleted flag before returning datasets
+    var projectFilter = {id: projectId, deleted: false};
+    Project.count(projectFilter).exec(function(err, count){
+      if(count == 0) return res.ok([]);
+
+      var datasetFilter = {project: projectId, deleted: false};
+      Dataset.find(datasetFilter).sort("createdAt").exec(function(err, datasets){
+        return res.json(datasets)
+      });
+    })
   },
 
   profile: function(req, res) {
@@ -106,6 +113,8 @@ module.exports = {
 
   destroy: function(req, res) {
     var datasetId = req.params.id;
+    if (!datasetId) return res.badRequest("Missing datasetId");
+
     Dataset.update({id: datasetId},{deleted: true}).exec(function(err, updatedDataset){
      return res.json(updatedDataset);
     });

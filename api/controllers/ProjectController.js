@@ -27,9 +27,15 @@ module.exports = {
   },
   destroy: function(req, res) {
     var projectId = req.params.id;
+    if (!projectId) return res.badRequest("Missing trailing /:projectId ");
+
     Project.update({id: projectId},{deleted: true}).exec(function(err, updatedProject){
-      return res.json(updatedProject);
+      // Update project's datasets deleted flags as well
+      Dataset.update({project: projectId},{deleted: true}).exec(function(err, updatedDatasets){
+          return res.json(updatedProject);
+      });
     });
   }
+
 };
 
