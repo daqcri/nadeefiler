@@ -27,12 +27,18 @@ module.exports = {
   },
   destroy: function(req, res) {
     var projectId = req.params.id;
-    if (!projectId) return res.badRequest("Missing trailing /:projectId ");
+    if (!projectId) return res.badRequest("Missing projectId ");
 
-    Project.update({id: projectId},{deleted: true}).exec(function(err, updatedProject){
-      // Update project's datasets deleted flags as well
-      Dataset.update({project: projectId},{deleted: true}).exec(function(err, updatedDatasets){
-          return res.json(updatedProject);
+     // If dataset already marked as deleted, return 404
+    Project.findOne({id: projectId}).exec(function(err, deletedProject){
+      if(!deletedProject || deletedProject.deleted) return res.notFound();
+
+      // Otherwise, set project deleted flag to true
+      Project.update({id: projectId},{deleted: true}).exec(function(err, updatedProject){
+        // Update project's datasets deleted flags as well
+        Dataset.update({project: projectId},{deleted: true}).exec(function(err, updatedDatasets){
+            return res.json(updatedProject);
+        });
       });
     });
   }

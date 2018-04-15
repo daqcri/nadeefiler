@@ -115,8 +115,14 @@ module.exports = {
     var datasetId = req.params.id;
     if (!datasetId) return res.badRequest("Missing datasetId");
 
-    Dataset.update({id: datasetId},{deleted: true}).exec(function(err, updatedDataset){
-     return res.json(updatedDataset);
+    // If dataset already marked as deleted, return 404
+    Dataset.findOne({id: datasetId}).exec(function(err, deletedDataset){
+      if(!deletedDataset || deletedDataset.deleted) return res.notFound();
+
+      // Otherwise, set deleted flag to true
+      Dataset.update({id: datasetId},{deleted: true}).exec(function(err, updatedDataset){
+        return res.json(updatedDataset);
+      });
     });
   }
 };
