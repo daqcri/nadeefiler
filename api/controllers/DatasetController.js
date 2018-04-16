@@ -8,7 +8,7 @@
 var _ = require('lodash');
 
 module.exports = {
-	
+
   create: function(req, res) {
     // raise connection timeout to 10 minutes for large uploads
     req.connection.setTimeout(10 * 60 * 1000);
@@ -89,8 +89,8 @@ module.exports = {
   find: function(req, res) {
     var projectId = req.param('projectId');
     if (!projectId) return res.badRequest("Missing projectId");
-
-    Dataset.find({project: projectId}).sort("createdAt").exec(function(err, datasets){
+    var datasetFilter = {project: projectId, deleted: false};
+    Dataset.find(datasetFilter).sort("createdAt").exec(function(err, datasets){
       return res.json(datasets)
     });
   },
@@ -102,6 +102,21 @@ module.exports = {
     if (!projectId) return res.badRequest("Missing project");
     Dataset.profile(datasetId, projectId);
     return res.ok();
+  },
+
+  destroy: function(req, res) {
+    var datasetId = req.params.id;
+    if (!datasetId) return res.badRequest("Missing datasetId");
+
+    // If dataset already marked as deleted, return 404
+    Dataset.findOne({id: datasetId}).exec(function(err, deletedDataset){
+      if(!deletedDataset || deletedDataset.deleted) return res.notFound();
+
+      // Otherwise, set deleted flag to true
+      Dataset.update({id: datasetId},{deleted: true}).exec(function(err, updatedDataset){
+        return (updatedDataset[0] ? res.json(updatedDataset[0]) : res.ok());
+      });
+    });
   }
 };
 

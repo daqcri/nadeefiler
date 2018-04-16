@@ -9,7 +9,7 @@ module.exports = {
 	// TODO disable unused REST routes aka blueprints
 
   find: function(req, res) {
-    var 
+    var
       datasetId = req.param('datasetId'),
       pageNumber = req.param('pageNumber') || 1,
       pageSize = req.param('pageSize') || 10,
@@ -18,16 +18,23 @@ module.exports = {
 
     if (!datasetId) return res.badRequest("Missing datasetId");
 
-    var filter = {dataset: datasetId};
-    filter[Tuple.ORDER_COLUMN] = {'$gt': (pageNumber - 1) * pageSize};
+    // Filter on dataset deleted flag before returning tuples
+    var datasetFilter = {id: datasetId, deleted: false};
+    Dataset.count(datasetFilter).exec(function(err, count){
+      if(count == 0) return res.ok([]);
 
-    Tuple
-      .find(filter)
-      .sort(sortColumn + " " + sortDirection)
-      .limit(pageSize)
-      .exec(function(err, tuples){
-        return res.json(tuples);
-      })
+      var tupleFilter = {dataset: datasetId};
+      tupleFilter[Tuple.ORDER_COLUMN] = {'$gt': (pageNumber - 1) * pageSize};
+
+      Tuple
+        .find(tupleFilter)
+        .sort(sortColumn + " " + sortDirection)
+        .limit(pageSize)
+        .exec(function(err, tuples){
+          return res.json(tuples);
+        })
+
+    })
   }
 
 };

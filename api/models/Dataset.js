@@ -26,6 +26,11 @@ module.exports = {
       collection: 'tuple',
       via: 'dataset'
     },
+    deleted:{
+      type: 'boolean',
+      required: true,
+      defaultsTo: false
+    },
     project: {
       model: 'project'
     },
