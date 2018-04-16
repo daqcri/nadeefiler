@@ -89,17 +89,10 @@ module.exports = {
   find: function(req, res) {
     var projectId = req.param('projectId');
     if (!projectId) return res.badRequest("Missing projectId");
-
-    // Filter on project deleted flag before returning datasets
-    var projectFilter = {id: projectId, deleted: false};
-    Project.count(projectFilter).exec(function(err, count){
-      if(count == 0) return res.ok([]);
-
-      var datasetFilter = {project: projectId, deleted: false};
-      Dataset.find(datasetFilter).sort("createdAt").exec(function(err, datasets){
-        return res.json(datasets)
-      });
-    })
+    var datasetFilter = {project: projectId, deleted: false};
+    Dataset.find(datasetFilter).sort("createdAt").exec(function(err, datasets){
+      return res.json(datasets)
+    });
   },
 
   profile: function(req, res) {
@@ -121,7 +114,7 @@ module.exports = {
 
       // Otherwise, set deleted flag to true
       Dataset.update({id: datasetId},{deleted: true}).exec(function(err, updatedDataset){
-        return res.json(updatedDataset);
+        return (updatedDataset[0] ? res.json(updatedDataset[0]) : res.ok());
       });
     });
   }

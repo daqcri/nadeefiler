@@ -29,7 +29,7 @@ module.exports = {
     var projectId = req.params.id;
     if (!projectId) return res.badRequest("Missing projectId ");
 
-     // If dataset already marked as deleted, return 404
+     // If project already marked as deleted, return 404
     Project.findOne({id: projectId}).exec(function(err, deletedProject){
       if(!deletedProject || deletedProject.deleted) return res.notFound();
 
@@ -37,7 +37,7 @@ module.exports = {
       Project.update({id: projectId},{deleted: true}).exec(function(err, updatedProject){
         // Update project's datasets deleted flags as well
         Dataset.update({project: projectId},{deleted: true}).exec(function(err, updatedDatasets){
-            return res.json(updatedProject);
+            return (updatedProject[0] ? res.json(updatedProject[0]) : res.ok());
         });
       });
     });
